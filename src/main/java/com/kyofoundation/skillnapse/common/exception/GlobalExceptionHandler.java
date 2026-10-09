@@ -72,6 +72,25 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        String msg = ex.getMessage();
+        Throwable cause = ex.getCause();
+        while (cause != null) {
+            if (cause.getMessage() != null) {
+                msg = cause.getMessage();
+            }
+            cause = cause.getCause();
+        }
+
+        if (msg != null && (msg.contains("429") || msg.toLowerCase().contains("quota") || msg.toLowerCase().contains("rate-limit") || msg.toLowerCase().contains("exceeded your current quota"))) {
+            log.warn("Cota de requisições ou taxa limite da IA atingida (429): {}", msg);
+            ErrorResponse error = ErrorResponse.of(
+                    HttpStatus.TOO_MANY_REQUESTS.value(),
+                    "Too Many Requests",
+                    "A cota de requisições da IA foi temporariamente atingida no provedor (429). Por favor, aguarde alguns instantes antes de tentar novamente."
+            );
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
+        }
+
         log.error("Erro interno inesperado no servidor (500): ", ex);
         ErrorResponse error = ErrorResponse.of(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
