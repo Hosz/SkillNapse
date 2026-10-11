@@ -25,14 +25,28 @@ import com.kyofoundation.skillnapse.modules.planoestudo.repository.PlanoEstudoRe
 import com.kyofoundation.skillnapse.modules.planoestudo.service.MateriaService;
 import com.kyofoundation.skillnapse.modules.planoestudo.service.PlanoEstudoService;
 import com.kyofoundation.skillnapse.modules.planoestudo.service.TopicoService;
+import com.kyofoundation.skillnapse.modules.canvas.dto.request.SalvarRascunhoCanvasRequest;
+import com.kyofoundation.skillnapse.modules.canvas.dto.response.RascunhoCanvasResponse;
+import com.kyofoundation.skillnapse.modules.canvas.service.RascunhoCanvasService;
+import com.kyofoundation.skillnapse.modules.flashcard.dto.request.CriarFlashcardRequest;
+import com.kyofoundation.skillnapse.modules.flashcard.dto.request.RevisarFlashcardRequest;
+import com.kyofoundation.skillnapse.modules.flashcard.dto.response.FlashcardResponse;
+import com.kyofoundation.skillnapse.modules.flashcard.entity.Baralho;
+import com.kyofoundation.skillnapse.modules.flashcard.enums.ClassificacaoResposta;
+import com.kyofoundation.skillnapse.modules.flashcard.repository.BaralhoRepository;
+import com.kyofoundation.skillnapse.modules.flashcard.service.FlashcardService;
 import com.kyofoundation.skillnapse.modules.questao.dto.request.CriarAlternativaRequest;
 import com.kyofoundation.skillnapse.modules.questao.dto.request.CriarQuestaoRequest;
+import com.kyofoundation.skillnapse.modules.questao.dto.request.CriarSimuladoRequest;
 import com.kyofoundation.skillnapse.modules.questao.dto.request.ResponderQuestaoRequest;
 import com.kyofoundation.skillnapse.modules.questao.dto.response.QuestaoDetalheResponse;
 import com.kyofoundation.skillnapse.modules.questao.dto.response.ResultadoResolucaoResponse;
+import com.kyofoundation.skillnapse.modules.questao.dto.response.SimuladoResponse;
 import com.kyofoundation.skillnapse.modules.questao.enums.DificuldadeQuestao;
+import com.kyofoundation.skillnapse.modules.questao.enums.TipoSimulado;
 import com.kyofoundation.skillnapse.modules.questao.service.QuestaoService;
 import com.kyofoundation.skillnapse.modules.questao.service.ResolucaoQuestaoService;
+import com.kyofoundation.skillnapse.modules.questao.service.SimuladoService;
 import com.kyofoundation.skillnapse.modules.redacao.entity.SubmissaoRedacao;
 import com.kyofoundation.skillnapse.modules.redacao.entity.TemaRedacao;
 import com.kyofoundation.skillnapse.modules.redacao.repository.SubmissaoRedacaoRepository;
@@ -89,10 +103,22 @@ class JornadaEstudanteE2EIntegrationTest {
     private SessaoEstudoService sessaoEstudoService;
 
     @Autowired
+    private RascunhoCanvasService rascunhoCanvasService;
+
+    @Autowired
+    private FlashcardService flashcardService;
+
+    @Autowired
+    private BaralhoRepository baralhoRepository;
+
+    @Autowired
     private QuestaoService questaoService;
 
     @Autowired
     private ResolucaoQuestaoService resolucaoQuestaoService;
+
+    @Autowired
+    private SimuladoService simuladoService;
 
     @Autowired
     private TemaRedacaoRepository temaRedacaoRepository;
@@ -176,7 +202,37 @@ class JornadaEstudanteE2EIntegrationTest {
         assertThat(sessao.id()).isNotNull();
         assertThat(sessao.duracaoLiquidaSegundos()).isEqualTo(3000);
 
-        // 5. Acervo de Questões e Resolução com Acerto
+        // 5. Quadro de Rascunho Digital (Canvas Acoplado ao Tópico)
+        RascunhoCanvasResponse canvasSalvo = rascunhoCanvasService.salvarRascunho(
+                userId,
+                topico.id(),
+                new SalvarRascunhoCanvasRequest(topico.id(), "{\"strokes\":[{\"points\":[10,20,30,40]}]}")
+        );
+        assertThat(canvasSalvo.id()).isNotNull();
+        assertThat(canvasSalvo.dadosDesenhoJson()).contains("strokes");
+
+        // 6. Flashcards SRS e Revisão Ativa (Algoritmo SM-2)
+        Baralho baralho = baralhoRepository.save(Baralho.builder()
+                .usuario(estudante)
+                .materia(null)
+                .titulo("Baralho Atos Administrativos")
+                .descricao("Flashcards de fixação de atos")
+                .build());
+        FlashcardResponse cardCriado = flashcardService.criarFlashcard(
+                userId,
+                new CriarFlashcardRequest(baralho.getId(), topico.id(), "O que é Motivo?", "Pressuposto fático e jurídico do ato.")
+        );
+        assertThat(cardCriado.id()).isNotNull();
+
+        FlashcardResponse cardRevisado = flashcardService.revisarFlashcard(
+                userId,
+                cardCriado.id(),
+                new RevisarFlashcardRequest(ClassificacaoResposta.BOM, 12)
+        );
+        assertThat(cardRevisado.intervaloDias()).isGreaterThan(0);
+        assertThat(cardRevisado.repeticoes()).isEqualTo(1);
+
+        // 7. Simulado e Resolução de Questões com Recálculo de Proficiência
         QuestaoDetalheResponse questao = questaoService.criar(
                 userId,
                 new CriarQuestaoRequest(
@@ -201,15 +257,25 @@ class JornadaEstudanteE2EIntegrationTest {
                 .orElseThrow()
                 .id();
 
+        SimuladoResponse simulado = simuladoService.criar(
+                new CriarSimuladoRequest("Simulado TCU - Bloco 1", TipoSimulado.MANUAL),
+                userId
+        );
+        assertThat(simulado.id()).isNotNull();
+
         ResultadoResolucaoResponse resolucao = resolucaoQuestaoService.responder(
                 questao.id(),
-                new ResponderQuestaoRequest(alternativaCorretaId, 45, topico.id(), null),
+                new ResponderQuestaoRequest(alternativaCorretaId, 45, topico.id(), simulado.id()),
                 userId
         );
         assertThat(resolucao.acertou()).isTrue();
         assertThat(resolucao.tempoGastoSegundos()).isEqualTo(45);
 
-        // 6. Laboratório de Redação com Submissão Persistida (escala 0 a 1000)
+        SimuladoResponse simuladoConcluido = simuladoService.concluir(simulado.id(), userId);
+        assertThat(simuladoConcluido.concluido()).isTrue();
+        assertThat(simuladoConcluido.percentualAcerto()).isEqualTo(100.0);
+
+        // 8. Laboratório de Redação com Submissão Persistida (escala 0 a 1000)
         PlanoEstudo planoEntity = planoEstudoRepository.findById(plano.id()).orElseThrow();
         TemaRedacao temaEntity = temaRedacaoRepository.save(TemaRedacao.builder()
                 .planoEstudo(planoEntity)
@@ -230,7 +296,7 @@ class JornadaEstudanteE2EIntegrationTest {
         assertThat(submissaoSalva.getId()).isNotNull();
         assertThat(submissaoSalva.getNotaGeral()).isEqualTo(new BigDecimal("940.00"));
 
-        // 7. Consolidação Analítica de Desempenho e Mapeamento de Lacunas
+        // 9. Consolidação Analítica de Desempenho e Mapeamento de Lacunas
         RelatorioLacunasResponse relatorio = desempenhoService.obterRelatorioLacunas(userId, plano.id());
 
         assertThat(relatorio).isNotNull();
