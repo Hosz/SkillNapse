@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TopicoValidator {
 
-    private static final int MAX_TITULO_LENGTH = 200;
+    private static final int MAX_TITULO_LENGTH = 1000;
     private static final int MIN_PESO = 1;
     private static final int MAX_PESO = 10;
 

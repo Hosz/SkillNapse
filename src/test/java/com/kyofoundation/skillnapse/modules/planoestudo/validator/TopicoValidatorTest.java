@@ -51,6 +51,22 @@ class TopicoValidatorTest {
     }
 
     @Test
+    @DisplayName("Deve aceitar titulo longo com ate 1000 caracteres e rejeitar acima de 1000 caracteres")
+    void deveValidarLimite1000CaracteresTitulo() {
+        String titulo1000 = "A".repeat(1000);
+        String titulo1001 = "A".repeat(1001);
+
+        CriarTopicoRequest valido = new CriarTopicoRequest(titulo1000, null, 1, NivelProficiencia.INICIANTE, 0);
+        CriarTopicoRequest invalido = new CriarTopicoRequest(titulo1001, null, 1, NivelProficiencia.INICIANTE, 0);
+
+        assertThatCode(() -> validator.validarCriacao(valido)).doesNotThrowAnyException();
+
+        assertThatThrownBy(() -> validator.validarCriacao(invalido))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("O título do tópico não pode ter mais de 1000 caracteres.");
+    }
+
+    @Test
     @DisplayName("Deve lancar BadRequestException quando peso do edital for menor que 1 ou maior que 10")
     void deveLancarExcecaoQuandoPesoInvalido() {
         CriarTopicoRequest pesoMenor = new CriarTopicoRequest("Topico", null, 0, NivelProficiencia.INICIANTE, 0);

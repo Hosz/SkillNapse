@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PlanoEstudoValidator {
 
-    private static final int MAX_TITULO_LENGTH = 150;
+    private static final int MAX_TITULO_LENGTH = 255;
 
     public void validarCriacao(PlanoEstudoRequest request) {
         if (request == null) {
