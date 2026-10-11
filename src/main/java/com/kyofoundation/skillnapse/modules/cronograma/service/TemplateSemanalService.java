@@ -142,5 +142,8 @@ public class TemplateSemanalService {
         for (TemplateSemanal ativo : ativos) {
             ativo.setAtivo(false);
         }
+        if (!ativos.isEmpty()) {
+            templateSemanalRepository.saveAll(ativos);
+        }
     }
 }

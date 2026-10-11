@@ -20,6 +20,23 @@ public record ExcecaoDiariaResponse(
         UUID materiaId,
         String materiaNome,
         UUID topicoId,
-        String topicoTitulo
+        String topicoTitulo,
+        String titulo
 ) {
+    public ExcecaoDiariaResponse(
+            UUID id,
+            LocalDate dataExcecao,
+            TipoAcaoExcecao tipoAcao,
+            UUID blocoTemplateOrigemId,
+            DiaSemana blocoTemplateOrigemDiaSemana,
+            LocalTime horaInicio,
+            LocalTime horaFim,
+            TipoBloco tipoBloco,
+            UUID materiaId,
+            String materiaNome,
+            UUID topicoId,
+            String topicoTitulo
+    ) {
+        this(id, dataExcecao, tipoAcao, blocoTemplateOrigemId, blocoTemplateOrigemDiaSemana, horaInicio, horaFim, tipoBloco, materiaId, materiaNome, topicoId, topicoTitulo, null);
+    }
 }

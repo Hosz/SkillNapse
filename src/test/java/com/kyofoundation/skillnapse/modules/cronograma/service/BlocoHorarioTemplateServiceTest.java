@@ -197,6 +197,95 @@ class BlocoHorarioTemplateServiceTest {
     }
 
     @Test
+    @DisplayName("Deve resetar topico ao trocar materia sem informar novo topico")
+    void deveResetarTopicoAoTrocarMateriaSemInformarNovoTopico() {
+        UUID userId = UUID.randomUUID();
+        UUID templateId = UUID.randomUUID();
+        UUID blocoId = UUID.randomUUID();
+        UUID materiaAntigaId = UUID.randomUUID();
+        UUID materiaNovaId = UUID.randomUUID();
+        Usuario usuario = Usuario.builder().id(userId).build();
+        TemplateSemanal template = TemplateSemanal.builder().id(templateId).build();
+        Materia materiaAntiga = Materia.builder().id(materiaAntigaId).nome("Direito Penal").build();
+        Topico topicoAntigo = Topico.builder().id(UUID.randomUUID()).titulo("Crime").materia(materiaAntiga).build();
+        Materia materiaNova = Materia.builder().id(materiaNovaId).nome("Direito Civil").build();
+
+        BlocoHorarioTemplate bloco = BlocoHorarioTemplate.builder()
+                .id(blocoId)
+                .templateSemanal(template)
+                .diaSemana(DiaSemana.SEGUNDA)
+                .horaInicio(LocalTime.of(14, 0))
+                .horaFim(LocalTime.of(16, 0))
+                .materia(materiaAntiga)
+                .topico(topicoAntigo)
+                .build();
+
+        EditarBlocoHorarioRequest request = new EditarBlocoHorarioRequest(
+                DiaSemana.SEGUNDA,
+                LocalTime.of(14, 0),
+                LocalTime.of(16, 0),
+                TipoBloco.FOCO_TEORIA,
+                materiaNovaId,
+                null,
+                false,
+                false
+        );
+
+        when(userFinder.findById(userId)).thenReturn(usuario);
+        when(templateSemanalFinder.findById(templateId)).thenReturn(template);
+        when(blocoHorarioTemplateFinder.findById(blocoId)).thenReturn(bloco);
+        when(materiaFinder.findById(materiaNovaId)).thenReturn(materiaNova);
+
+        BlocoHorarioResponse response = blocoHorarioTemplateService.editarBlocoHorario(userId, templateId, blocoId, request);
+
+        assertThat(response.materiaId()).isEqualTo(materiaNovaId);
+        assertThat(response.topicoId()).isNull();
+        assertThat(bloco.getTopico()).isNull();
+    }
+
+    @Test
+    @DisplayName("Deve desvincular materia e topico com sucesso")
+    void deveDesvincularMateriaETopicoComSucesso() {
+        UUID userId = UUID.randomUUID();
+        UUID templateId = UUID.randomUUID();
+        UUID blocoId = UUID.randomUUID();
+        Usuario usuario = Usuario.builder().id(userId).build();
+        TemplateSemanal template = TemplateSemanal.builder().id(templateId).build();
+        Materia materia = Materia.builder().id(UUID.randomUUID()).nome("História").build();
+
+        BlocoHorarioTemplate bloco = BlocoHorarioTemplate.builder()
+                .id(blocoId)
+                .templateSemanal(template)
+                .diaSemana(DiaSemana.SEGUNDA)
+                .horaInicio(LocalTime.of(14, 0))
+                .horaFim(LocalTime.of(16, 0))
+                .materia(materia)
+                .build();
+
+        EditarBlocoHorarioRequest request = new EditarBlocoHorarioRequest(
+                DiaSemana.SEGUNDA,
+                LocalTime.of(14, 0),
+                LocalTime.of(16, 0),
+                TipoBloco.FOCO_TEORIA,
+                null,
+                null,
+                true,
+                true
+        );
+
+        when(userFinder.findById(userId)).thenReturn(usuario);
+        when(templateSemanalFinder.findById(templateId)).thenReturn(template);
+        when(blocoHorarioTemplateFinder.findById(blocoId)).thenReturn(bloco);
+
+        BlocoHorarioResponse response = blocoHorarioTemplateService.editarBlocoHorario(userId, templateId, blocoId, request);
+
+        assertThat(response.materiaId()).isNull();
+        assertThat(response.topicoId()).isNull();
+        assertThat(bloco.getMateria()).isNull();
+        assertThat(bloco.getTopico()).isNull();
+    }
+
+    @Test
     @DisplayName("Deve apagar bloco de horario com sucesso")
     void deveApagarBlocoComSucesso() {
         UUID userId = UUID.randomUUID();

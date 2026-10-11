@@ -15,8 +15,8 @@ import com.kyofoundation.skillnapse.modules.cronograma.enums.TipoAcaoExcecao;
 import com.kyofoundation.skillnapse.modules.cronograma.enums.TipoBloco;
 import com.kyofoundation.skillnapse.modules.cronograma.finder.BlocoHorarioTemplateFinder;
 import com.kyofoundation.skillnapse.modules.cronograma.finder.ExcecaoDiariaFinder;
+import com.kyofoundation.skillnapse.modules.cronograma.finder.TemplateSemanalFinder;
 import com.kyofoundation.skillnapse.modules.cronograma.repository.ExcecaoDiariaRepository;
-import com.kyofoundation.skillnapse.modules.cronograma.repository.TemplateSemanalRepository;
 import com.kyofoundation.skillnapse.modules.cronograma.support.ProjecaoCronogramaSupport;
 import com.kyofoundation.skillnapse.modules.cronograma.validator.ExcecaoDiariaValidator;
 import com.kyofoundation.skillnapse.modules.planoestudo.finder.MateriaFinder;
@@ -71,7 +71,7 @@ class CronogramaDiarioServiceTest {
     private ExcecaoDiariaRepository excecaoDiariaRepository;
 
     @Mock
-    private TemplateSemanalRepository templateSemanalRepository;
+    private TemplateSemanalFinder templateSemanalFinder;
 
     @InjectMocks
     private CronogramaDiarioService cronogramaDiarioService;
@@ -177,7 +177,7 @@ class CronogramaDiarioServiceTest {
         AgendaDiariaResponse agendaEsperada = new AgendaDiariaResponse(data, DiaSemana.QUINTA, template.getId(), "Padrão", List.of());
 
         when(userFinder.findById(userId)).thenReturn(usuario);
-        when(templateSemanalRepository.findByUsuarioAndAtivoTrue(usuario)).thenReturn(Optional.of(template));
+        when(templateSemanalFinder.findAtivoOpcionalByUsuario(usuario)).thenReturn(Optional.of(template));
         when(blocoHorarioTemplateFinder.findAllByTemplateSemanalAndDiaSemana(eq(template), eq(DiaSemana.QUINTA)))
                 .thenReturn(List.of());
         when(excecaoDiariaFinder.findAllByUsuarioEData(usuario, data)).thenReturn(List.of());

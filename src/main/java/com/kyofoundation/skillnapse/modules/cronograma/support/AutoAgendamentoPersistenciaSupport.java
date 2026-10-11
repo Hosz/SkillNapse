@@ -48,6 +48,14 @@ public class AutoAgendamentoPersistenciaSupport {
                     ? request.nomeTemplate().trim()
                     : "Auto-Agendamento IA";
 
+            List<TemplateSemanal> ativosExistentes = templateSemanalRepository.findAllByUsuarioAndAtivoTrue(usuario);
+            for (TemplateSemanal ativoExistente : ativosExistentes) {
+                ativoExistente.setAtivo(false);
+            }
+            if (!ativosExistentes.isEmpty()) {
+                templateSemanalRepository.saveAll(ativosExistentes);
+            }
+
             template = TemplateSemanal.builder()
                     .usuario(usuario)
                     .nome(nome)
@@ -64,12 +72,15 @@ public class AutoAgendamentoPersistenciaSupport {
                 Topico topico = blocoRequest.topicoId() != null ? mapaTopicos.get(blocoRequest.topicoId()) : null;
                 TipoBloco tipoBloco = blocoRequest.tipoBloco() != null ? blocoRequest.tipoBloco() : TipoBloco.FOCO_TEORIA;
 
+                String tituloBloco = topico != null ? topico.getTitulo() : (materia != null ? materia.getNome() : "Bloco de Estudo");
+
                 BlocoHorarioTemplate bloco = BlocoHorarioTemplate.builder()
                         .templateSemanal(template)
                         .diaSemana(blocoRequest.diaSemana())
                         .horaInicio(blocoRequest.horaInicio())
                         .horaFim(blocoRequest.horaFim())
                         .tipoBloco(tipoBloco)
+                        .titulo(tituloBloco)
                         .materia(materia)
                         .topico(topico)
                         .build();

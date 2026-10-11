@@ -24,6 +24,22 @@ public record EditarBlocoHorarioRequest(
         UUID materiaId,
 
         @Schema(description = "Novo identificador do tópico associado")
-        UUID topicoId
+        UUID topicoId,
+
+        @Schema(description = "Novo título ou nome do bloco", example = "Direito Constitucional - Direitos Fundamentais")
+        String titulo,
+
+        @Schema(description = "Indica se deve desvincular a matéria do bloco", example = "false")
+        Boolean desvincularMateria,
+
+        @Schema(description = "Indica se deve desvincular o tópico do bloco", example = "false")
+        Boolean desvincularTopico
 ) {
+    public EditarBlocoHorarioRequest(DiaSemana diaSemana, LocalTime horaInicio, LocalTime horaFim, TipoBloco tipoBloco, UUID materiaId, UUID topicoId) {
+        this(diaSemana, horaInicio, horaFim, tipoBloco, materiaId, topicoId, null, false, false);
+    }
+
+    public EditarBlocoHorarioRequest(DiaSemana diaSemana, LocalTime horaInicio, LocalTime horaFim, TipoBloco tipoBloco, UUID materiaId, UUID topicoId, Boolean desvincularMateria, Boolean desvincularTopico) {
+        this(diaSemana, horaInicio, horaFim, tipoBloco, materiaId, topicoId, null, desvincularMateria, desvincularTopico);
+    }
 }

@@ -22,6 +22,10 @@ public class BlocoHorarioTemplateMapper {
                                                            Materia materia,
                                                            Topico topico) {
         TipoBloco tipo = request.tipoBloco() != null ? request.tipoBloco() : TipoBloco.FOCO_TEORIA;
+        String titulo = request.titulo();
+        if (titulo == null || titulo.isBlank()) {
+            titulo = topico != null ? topico.getTitulo() : (materia != null ? materia.getNome() : "Bloco de Estudo");
+        }
 
         return BlocoHorarioTemplate.builder()
                 .templateSemanal(templateSemanal)
@@ -29,6 +33,7 @@ public class BlocoHorarioTemplateMapper {
                 .horaInicio(request.horaInicio())
                 .horaFim(request.horaFim())
                 .tipoBloco(tipo)
+                .titulo(titulo.trim())
                 .materia(materia)
                 .topico(topico)
                 .build();
@@ -39,6 +44,12 @@ public class BlocoHorarioTemplateMapper {
         String materiaNome = blocoHorarioTemplate.getMateria() != null ? blocoHorarioTemplate.getMateria().getNome() : null;
         UUID topicoId = blocoHorarioTemplate.getTopico() != null ? blocoHorarioTemplate.getTopico().getId() : null;
         String topicoTitulo = blocoHorarioTemplate.getTopico() != null ? blocoHorarioTemplate.getTopico().getTitulo() : null;
+
+        String titulo = blocoHorarioTemplate.getTitulo();
+        if (titulo == null || titulo.isBlank()) {
+            titulo = topicoTitulo != null ? topicoTitulo : (materiaNome != null ? materiaNome : "Bloco de Estudo");
+        }
+
         List<TopicoRevisaoItemResponse> topicosRevisao = blocoHorarioTemplate.getTopicosRevisao() != null
                 ? blocoHorarioTemplate.getTopicosRevisao().stream()
                         .map(t -> new TopicoRevisaoItemResponse(
@@ -57,6 +68,7 @@ public class BlocoHorarioTemplateMapper {
                 blocoHorarioTemplate.getHoraInicio(),
                 blocoHorarioTemplate.getHoraFim(),
                 blocoHorarioTemplate.getTipoBloco(),
+                titulo,
                 materiaId,
                 materiaNome,
                 topicoId,
@@ -84,11 +96,14 @@ public class BlocoHorarioTemplateMapper {
         if (request.tipoBloco() != null) {
             blocoHorarioTemplate.setTipoBloco(request.tipoBloco());
         }
-        if (request.materiaId() != null) {
-            blocoHorarioTemplate.setMateria(materia);
+        if (request.titulo() != null && !request.titulo().isBlank()) {
+            blocoHorarioTemplate.setTitulo(request.titulo().trim());
+        } else if (topico != null) {
+            blocoHorarioTemplate.setTitulo(topico.getTitulo());
+        } else if (materia != null) {
+            blocoHorarioTemplate.setTitulo(materia.getNome());
         }
-        if (request.topicoId() != null) {
-            blocoHorarioTemplate.setTopico(topico);
-        }
+        blocoHorarioTemplate.setMateria(materia);
+        blocoHorarioTemplate.setTopico(topico);
     }
 }

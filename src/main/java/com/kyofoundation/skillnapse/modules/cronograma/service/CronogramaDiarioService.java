@@ -13,9 +13,9 @@ import com.kyofoundation.skillnapse.modules.cronograma.entity.TemplateSemanal;
 import com.kyofoundation.skillnapse.modules.cronograma.enums.DiaSemana;
 import com.kyofoundation.skillnapse.modules.cronograma.finder.BlocoHorarioTemplateFinder;
 import com.kyofoundation.skillnapse.modules.cronograma.finder.ExcecaoDiariaFinder;
+import com.kyofoundation.skillnapse.modules.cronograma.finder.TemplateSemanalFinder;
 import com.kyofoundation.skillnapse.modules.cronograma.mapper.ExcecaoDiariaMapper;
 import com.kyofoundation.skillnapse.modules.cronograma.repository.ExcecaoDiariaRepository;
-import com.kyofoundation.skillnapse.modules.cronograma.repository.TemplateSemanalRepository;
 import com.kyofoundation.skillnapse.modules.cronograma.support.ProjecaoCronogramaSupport;
 import com.kyofoundation.skillnapse.modules.cronograma.validator.ExcecaoDiariaValidator;
 import com.kyofoundation.skillnapse.modules.planoestudo.entity.Materia;
@@ -44,7 +44,7 @@ public class CronogramaDiarioService {
     private final ExcecaoDiariaValidator excecaoDiariaValidator;
     private final ProjecaoCronogramaSupport projecaoCronogramaSupport;
     private final ExcecaoDiariaRepository excecaoDiariaRepository;
-    private final TemplateSemanalRepository templateSemanalRepository;
+    private final TemplateSemanalFinder templateSemanalFinder;
 
     @Transactional
     public ExcecaoDiariaResponse registrarExcecao(UUID userId, LocalDate data, RegistrarExcecaoDiariaRequest request) {
@@ -117,7 +117,7 @@ public class CronogramaDiarioService {
 
         DiaSemana diaSemana = DiaSemana.fromDayOfWeek(data.getDayOfWeek());
 
-        Optional<TemplateSemanal> templateAtivoOpt = templateSemanalRepository.findByUsuarioAndAtivoTrue(usuario);
+        Optional<TemplateSemanal> templateAtivoOpt = templateSemanalFinder.findAtivoOpcionalByUsuario(usuario);
         TemplateSemanal templateAtivo = templateAtivoOpt.orElse(null);
 
         List<BlocoHorarioTemplate> blocosTemplate = templateAtivo != null

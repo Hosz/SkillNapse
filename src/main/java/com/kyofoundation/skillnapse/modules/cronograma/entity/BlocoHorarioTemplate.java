@@ -67,6 +67,9 @@ public class BlocoHorarioTemplate {
     @Column(name = "tipo_bloco", length = 20, nullable = false)
     private TipoBloco tipoBloco = TipoBloco.FOCO_TEORIA;
 
+    @Column(name = "titulo", length = 255)
+    private String titulo;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "materia_id")
     private Materia materia;

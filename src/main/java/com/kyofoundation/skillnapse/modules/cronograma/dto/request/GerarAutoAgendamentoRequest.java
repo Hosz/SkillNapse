@@ -38,8 +38,21 @@ public record GerarAutoAgendamentoRequest(
         Boolean incluirSimulado,
 
         @Schema(description = "Estratégia pedagógica para balanceamento dos tópicos", example = "FOCO_PESO_EDITAL", defaultValue = "FOCO_PESO_EDITAL")
-        EstrategiaAgendamento estrategia
+        EstrategiaAgendamento estrategia,
+
+        @Schema(description = "Instruções personalizadas, rotina e particularidades do estudante", example = "Trabalho em regime 12x36, tenho facilidade em Língua Portuguesa e preciso focar mais em Direito Constitucional.")
+        String instrucoesPersonalizadas
 ) {
+    public GerarAutoAgendamentoRequest(
+            UUID planoEstudoId,
+            List<JanelaDisponibilidadeRequest> disponibilidades,
+            Integer duracaoBlocoMinutos,
+            Integer intervaloDescansoMinutos,
+            Boolean incluirRevisao,
+            Boolean incluirSimulado,
+            EstrategiaAgendamento estrategia) {
+        this(planoEstudoId, disponibilidades, duracaoBlocoMinutos, intervaloDescansoMinutos, incluirRevisao, incluirSimulado, estrategia, null);
+    }
     public int duracaoBlocoMinutosEfetiva() {
         return duracaoBlocoMinutos != null ? duracaoBlocoMinutos : 60;
     }

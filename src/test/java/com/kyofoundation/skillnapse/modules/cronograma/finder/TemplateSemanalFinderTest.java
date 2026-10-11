@@ -76,4 +76,21 @@ class TemplateSemanalFinderTest {
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessage("Nenhum template semanal ativo encontrado para o usuário.");
     }
+
+    @Test
+    @DisplayName("Deve auto-curar e retornar o mais recente quando houver multiplos templates ativos")
+    void deveCurarMultiplosTemplatesAtivosERetornarMaisRecente() {
+        Usuario usuario = Usuario.builder().id(UUID.randomUUID()).build();
+        TemplateSemanal maisRecente = TemplateSemanal.builder().id(UUID.randomUUID()).nome("Recente").ativo(true).build();
+        TemplateSemanal antigo = TemplateSemanal.builder().id(UUID.randomUUID()).nome("Antigo").ativo(true).build();
+
+        when(repository.findAllByUsuarioAndAtivoTrueOrderByCriadoEmDesc(usuario))
+                .thenReturn(new java.util.ArrayList<>(java.util.List.of(maisRecente, antigo)));
+
+        TemplateSemanal resultado = finder.findAtivoByUsuario(usuario);
+
+        assertThat(resultado).isEqualTo(maisRecente);
+        assertThat(antigo.getAtivo()).isFalse();
+        org.mockito.Mockito.verify(repository).saveAll(org.mockito.ArgumentMatchers.anyList());
+    }
 }
