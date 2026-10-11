@@ -34,6 +34,19 @@ public class FlashcardMapper {
                 .build();
     }
 
+    public static Flashcard toEntity(String frente, String verso, Baralho baralho, Topico topico) {
+        return Flashcard.builder()
+                .baralho(baralho)
+                .topico(topico)
+                .frente(frente != null ? frente.trim() : "")
+                .verso(verso != null ? verso.trim() : "")
+                .fatorFacilidade(new BigDecimal("2.50"))
+                .intervaloDias(0)
+                .repeticoes(0)
+                .proximaRevisao(LocalDate.now())
+                .build();
+    }
+
     public static void updateEntity(Flashcard entity, AtualizarFlashcardRequest request, Topico topico) {
         entity.setFrente(request.frente().trim());
         entity.setVerso(request.verso().trim());

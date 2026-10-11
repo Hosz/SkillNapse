@@ -22,6 +22,15 @@ public class BaralhoMapper {
                 .build();
     }
 
+    public static Baralho toEntity(String titulo, String descricao, Usuario usuario, Materia materia) {
+        return Baralho.builder()
+                .usuario(usuario)
+                .materia(materia)
+                .titulo(titulo.trim())
+                .descricao(descricao != null ? descricao.trim() : null)
+                .build();
+    }
+
     public static void updateEntity(Baralho entity, AtualizarBaralhoRequest request, Materia materia) {
         entity.setTitulo(request.titulo().trim());
         entity.setDescricao(request.descricao() != null ? request.descricao().trim() : null);
