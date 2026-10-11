@@ -276,4 +276,26 @@ class AuthServiceTest {
         assertThat(tokenSalvo.getRevogado()).isTrue();
         verify(tokenAtualizacaoRepository).save(tokenSalvo);
     }
+
+    @Test
+    @DisplayName("Deve obter dados do usuario autenticado com sucesso")
+    void deveObterUsuarioAutenticadoComSucesso() {
+        Usuario usuario = Usuario.builder()
+                .id(UUID.randomUUID())
+                .nome("Aluno Kyo")
+                .email("aluno@skillnapse.com")
+                .ativo(true)
+                .build();
+
+        when(userFinder.findById(usuario.getId())).thenReturn(usuario);
+
+        RegistroResponse response = authService.obterUsuarioAutenticado(usuario.getId());
+
+        assertThat(response).isNotNull();
+        assertThat(response.id()).isEqualTo(usuario.getId());
+        assertThat(response.nome()).isEqualTo("Aluno Kyo");
+        assertThat(response.email()).isEqualTo("aluno@skillnapse.com");
+
+        verify(usuarioValidator).validarUsuarioAtivo(usuario);
+    }
 }
