@@ -20,7 +20,22 @@ class EditalPromptSupportTest {
         assertThat(request.prompt()).contains("Português, Matemática.");
         assertThat(request.prompt()).doesNotContain("$s");
         assertThat(request.systemMessage()).contains("Conteúdo Programático");
+        assertThat(request.temperature()).isEqualTo(0.2);
+        assertThat(request.maxTokens()).isEqualTo(16384);
+    }
+
+    @Test
+    @DisplayName("Deve construir PromptRequest para detecção de múltiplos cargos")
+    void deveConstruirPromptDeteccaoCargosCorretamente() {
+        EditalPromptSupport support = new EditalPromptSupport();
+        String texto = "Edital de Concurso TRF: Cargos de Analista e Técnico.";
+
+        PromptRequest request = support.criarPromptParaDeteccaoCargos(texto);
+
+        assertThat(request).isNotNull();
+        assertThat(request.prompt()).contains("Cargos de Analista e Técnico.");
+        assertThat(request.systemMessage()).contains("cargos");
         assertThat(request.temperature()).isEqualTo(0.1);
-        assertThat(request.maxTokens()).isEqualTo(4000);
+        assertThat(request.maxTokens()).isEqualTo(8192);
     }
 }

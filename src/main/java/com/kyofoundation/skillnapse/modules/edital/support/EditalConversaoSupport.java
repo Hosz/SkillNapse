@@ -46,9 +46,11 @@ public class EditalConversaoSupport {
                 ? request.descricaoPlano()
                 : "Plano gerado automaticamente a partir do edital " + rascunhoEdital.getNomeArquivo();
 
+        String tituloPlano = normalizarTituloPlano(request.tituloPlano(), rascunhoEdital.getNomeArquivo());
+
         PlanoEstudo plano = PlanoEstudo.builder()
                 .usuario(usuario)
-                .titulo(request.tituloPlano())
+                .titulo(tituloPlano)
                 .descricao(descricao)
                 .ativo(true)
                 .build();
@@ -65,7 +67,7 @@ public class EditalConversaoSupport {
 
             Materia materia = Materia.builder()
                     .planoEstudo(plano)
-                    .nome(itemMateria.nome())
+                    .nome(normalizarNomeMateria(itemMateria.nome()))
                     .corHex(corHex)
                     .ordem(i)
                     .build();
@@ -81,7 +83,7 @@ public class EditalConversaoSupport {
                     Topico topicoPai = Topico.builder()
                             .materia(materia)
                             .topicoPai(null)
-                            .titulo(itemTopico.titulo())
+                            .titulo(normalizarTitulo(itemTopico.titulo()))
                             .pesoEdital(peso)
                             .nivelProficiencia(NivelProficiencia.INICIANTE)
                             .concluido(false)
@@ -96,7 +98,7 @@ public class EditalConversaoSupport {
                             Topico subtopico = Topico.builder()
                                     .materia(materia)
                                     .topicoPai(topicoPai)
-                                    .titulo(subTitulo)
+                                    .titulo(normalizarTitulo(subTitulo))
                                     .pesoEdital(peso)
                                     .nivelProficiencia(NivelProficiencia.INICIANTE)
                                     .concluido(false)
@@ -120,5 +122,30 @@ public class EditalConversaoSupport {
                 totalMaterias,
                 totalTopicos
         );
+    }
+
+    private String normalizarTitulo(String titulo) {
+        if (titulo == null || titulo.isBlank()) {
+            return "Tópico sem título";
+        }
+        String limpo = titulo.trim();
+        return limpo.length() > 1000 ? limpo.substring(0, 1000).trim() : limpo;
+    }
+
+    private String normalizarNomeMateria(String nome) {
+        if (nome == null || nome.isBlank()) {
+            return "Matéria sem nome";
+        }
+        String limpo = nome.trim();
+        return limpo.length() > 255 ? limpo.substring(0, 255).trim() : limpo;
+    }
+
+    private String normalizarTituloPlano(String titulo, String nomeArquivo) {
+        if (titulo != null && !titulo.isBlank()) {
+            String limpo = titulo.trim();
+            return limpo.length() > 255 ? limpo.substring(0, 255).trim() : limpo;
+        }
+        String fallback = "Plano - " + (nomeArquivo != null ? nomeArquivo : "Edital");
+        return fallback.length() > 255 ? fallback.substring(0, 255).trim() : fallback;
     }
 }

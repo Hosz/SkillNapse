@@ -12,6 +12,8 @@ import com.kyofoundation.skillnapse.modules.edital.entity.RascunhoEdital;
 import com.kyofoundation.skillnapse.modules.edital.enums.StatusRascunhoEdital;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -73,5 +75,27 @@ public class EditalTreeMapper {
         }
         EditalArvoreEstruturada arvore = fromJson(rascunho.getConteudoExtraidoJson());
         return toResponse(rascunho, arvore);
+    }
+
+    public static RascunhoEditalResponse toResponseAguardandoSelecaoCargo(
+            String originalFilename,
+            String nomeConcurso,
+            List<String> cargosDisponiveis
+    ) {
+        EditalArvoreEstruturada arvoreInicial = new EditalArvoreEstruturada(
+                nomeConcurso != null && !nomeConcurso.isBlank() ? nomeConcurso : "Concurso Público",
+                "",
+                List.of()
+        );
+        return new RascunhoEditalResponse(
+                null,
+                originalFilename,
+                null,
+                StatusRascunhoEdital.PROCESSANDO,
+                arvoreInicial,
+                cargosDisponiveis != null ? cargosDisponiveis : List.of(),
+                true,
+                Instant.now()
+        );
     }
 }
