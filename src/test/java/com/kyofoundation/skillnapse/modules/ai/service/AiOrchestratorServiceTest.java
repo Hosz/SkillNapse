@@ -40,13 +40,16 @@ class AiOrchestratorServiceTest {
     @Mock
     private UsuarioValidator usuarioValidator;
 
+    @Mock
+    private com.kyofoundation.skillnapse.modules.ai.support.AiFallbackClientSupport aiFallbackClientSupport;
+
     private AiPromptValidator validator;
     private AiOrchestratorService orchestratorService;
 
     @BeforeEach
     void setUp() {
         validator = new AiPromptValidator();
-        orchestratorService = new AiOrchestratorService(chatClientBuilder, chatModel, validator, userFinder, usuarioValidator);
+        orchestratorService = new AiOrchestratorService(chatClientBuilder, chatModel, validator, userFinder, usuarioValidator, aiFallbackClientSupport);
     }
 
     record StructuredPlanResponse(String materia, List<String> topicos) {}
@@ -129,5 +132,148 @@ class AiOrchestratorServiceTest {
                 .hasMessage("O prompt não pode ser nulo ou vazio.");
 
         verify(chatClientBuilder, never()).build();
+    }
+
+    @Test
+    @DisplayName("Deve limpar preâmbulo e blocos de código Markdown retornando estritamente JSON")
+    void deveLimparPreambuloEJsonMarkdown() {
+        String sujo = """
+                Dos atos probatórios
+                ```json
+                {
+                  "nomeConcurso": "TJPE",
+                  "cargo": "Técnico",
+                  "materias": []
+                }
+                ```
+                Atenciosamente!
+                """;
+
+        String limpo = AiOrchestratorService.cleanJsonText(sujo);
+
+        assertThat(limpo).startsWith("{").endsWith("}");
+        assertThat(limpo).doesNotContain("Dos atos probatórios");
+        assertThat(limpo).doesNotContain("```");
+        assertThat(limpo).doesNotContain("Atenciosamente");
+    }
+
+    @Test
+    @DisplayName("Deve limpar blocos de raciocínio de tags <think> e extrair JSON array")
+    void deveLimparTagsDePensamentoEExtrairJsonArray() {
+        String entradaComRaciocinio = """
+                <think>
+                Analisando o edital e extraindo tópicos...
+                </think>
+                ```
+                [{"id": 1, "nome": "Português"}]
+                ```
+                """;
+
+        String limpo = AiOrchestratorService.cleanJsonText(entradaComRaciocinio);
+
+        assertThat(limpo).isEqualTo("[{\"id\": 1, \"nome\": \"Português\"}]");
+    }
+
+    @Test
+    @DisplayName("Deve preservar JSON puro sem alterações indevidas")
+    void devePreservarJsonPuro() {
+        String jsonPuro = "{\"status\": \"OK\"}";
+        String limpo = AiOrchestratorService.cleanJsonText(jsonPuro);
+        assertThat(limpo).isEqualTo("{\"status\": \"OK\"}");
+    }
+
+    @Test
+    @DisplayName("Deve auto-reparar JSON truncado com string e delimitadores não fechados")
+    void deveRepararJsonTruncadoComStringAberta() {
+        String truncado = "{\"nomeConcurso\": \"Concurso 2026\", \"cargos\": [\"Analista Judiciário";
+        String reparado = AiOrchestratorService.cleanJsonText(truncado);
+
+        assertThat(reparado).isEqualTo("{\"nomeConcurso\": \"Concurso 2026\", \"cargos\": [\"Analista Judiciário\"]}");
+    }
+
+    @Test
+    @DisplayName("Deve auto-reparar JSON truncado com vírgula pendente")
+    void deveRepararJsonTruncadoComVirgulaPendente() {
+        String truncado = "{\"nomeConcurso\": \"Concurso 2026\", \"cargos\": [\"Analista\", ";
+        String reparado = AiOrchestratorService.cleanJsonText(truncado);
+
+        assertThat(reparado).isEqualTo("{\"nomeConcurso\": \"Concurso 2026\", \"cargos\": [\"Analista\"]}");
+    }
+
+    @Test
+    @DisplayName("Deve auto-reparar bloco de código markdown não fechado")
+    void deveRepararBlocoMarkdownTruncadoSemFechamento() {
+        String truncado = "```json\n{\"nomeConcurso\": \"Concurso 2026\", \"cargos\": [\"Técnico";
+        String reparado = AiOrchestratorService.cleanJsonText(truncado);
+
+        assertThat(reparado).isEqualTo("{\"nomeConcurso\": \"Concurso 2026\", \"cargos\": [\"Técnico\"]}");
+    }
+
+    @Test
+    @DisplayName("Deve acionar provedor secundário de fallback com sucesso quando provedor principal der 429")
+    void deveChamarFallbackComSucessoQuandoProvedorPrincipalRetornar429() {
+        PromptRequest request = new PromptRequest("Gerar tópicos de estudo");
+        AiGenerationResponse respostaFallback = new AiGenerationResponse(
+                "Resposta gerada pelo Groq (Llama 3)",
+                "groq",
+                "llama-3.3-70b-versatile",
+                50L,
+                100L,
+                150L,
+                java.time.Instant.now()
+        );
+
+        when(chatClientBuilder.build().prompt().user(request.prompt()).call())
+                .thenThrow(new RuntimeException("429 RESOURCE_EXHAUSTED: Quota exceeded"));
+        when(aiFallbackClientSupport.isFallbackDisponivel()).thenReturn(true);
+        when(aiFallbackClientSupport.executeFallback(request)).thenReturn(respostaFallback);
+
+        AiGenerationResponse resultado = orchestratorService.generate(request);
+
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.content()).isEqualTo("Resposta gerada pelo Groq (Llama 3)");
+        assertThat(resultado.provider()).isEqualTo("groq");
+        verify(aiFallbackClientSupport).executeFallback(request);
+    }
+
+    @Test
+    @DisplayName("Deve lançar AiQuotaExceededException quando erro de cota 429 persistir e fallback estiver indisponível")
+    void deveLancarAiQuotaExceededExceptionQuandoErro429Persistir() {
+        PromptRequest request = new PromptRequest("Gerar resumo");
+
+        when(chatClientBuilder.build().prompt().user(request.prompt()).call())
+                .thenThrow(new RuntimeException("429 RESOURCE_EXHAUSTED: Quota exceeded for quota metric"));
+        when(aiFallbackClientSupport.isFallbackDisponivel()).thenReturn(false);
+
+        assertThatThrownBy(() -> orchestratorService.generate(request))
+                .isInstanceOf(com.kyofoundation.skillnapse.common.exception.AiQuotaExceededException.class)
+                .hasMessageContaining("A cota diária de requisições de Inteligência Artificial foi atingida");
+    }
+
+    @Test
+    @DisplayName("Deve acionar provedor secundário de fallback com sucesso quando provedor principal retornar erro 401 de credenciais")
+    void deveChamarFallbackComSucessoQuandoProvedorPrincipalRetornar401CredenciaisInvalidas() {
+        PromptRequest request = new PromptRequest("Gerar lote de questões");
+        AiGenerationResponse respostaFallback = new AiGenerationResponse(
+                "Resposta de questões via Groq",
+                "groq",
+                "llama-3.3-70b-versatile",
+                30L,
+                80L,
+                110L,
+                java.time.Instant.now()
+        );
+
+        when(chatClientBuilder.build().prompt().user(request.prompt()).call())
+                .thenThrow(new RuntimeException("401 . Request had invalid authentication credentials. reason: ACCESS_TOKEN_TYPE_UNSUPPORTED"));
+        when(aiFallbackClientSupport.isFallbackDisponivel()).thenReturn(true);
+        when(aiFallbackClientSupport.executeFallback(request)).thenReturn(respostaFallback);
+
+        AiGenerationResponse resultado = orchestratorService.generate(request);
+
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.content()).isEqualTo("Resposta de questões via Groq");
+        assertThat(resultado.provider()).isEqualTo("groq");
+        verify(aiFallbackClientSupport).executeFallback(request);
     }
 }
