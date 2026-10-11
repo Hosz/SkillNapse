@@ -21,14 +21,17 @@ public class TemaRedacaoValidator {
         if (request == null) {
             throw new BadRequestException("Os dados para geração do tema de redação não podem ser nulos.");
         }
-        if (request.planoEstudoId() == null) {
-            throw new BadRequestException("O ID do plano de estudo é obrigatório.");
+        if (request.planoEstudoId() == null && (request.eixoTematico() == null || request.eixoTematico().isBlank())) {
+            throw new BadRequestException("Informe ao menos o plano de estudos ou um eixo temático para a redação.");
         }
         if (request.bancaAlvo() != null && request.bancaAlvo().length() > 50) {
             throw new BadRequestException("O nome da banca avaliadora não pode ultrapassar 50 caracteres.");
         }
         if (request.generoTextual() != null && request.generoTextual().length() > 50) {
             throw new BadRequestException("O gênero textual não pode ultrapassar 50 caracteres.");
+        }
+        if (request.eixoTematico() != null && request.eixoTematico().length() > 200) {
+            throw new BadRequestException("O eixo temático não pode ultrapassar 200 caracteres.");
         }
     }
 

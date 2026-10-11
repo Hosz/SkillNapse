@@ -53,17 +53,20 @@ public class TemaRedacaoService {
         Usuario usuario = userFinder.findById(userId);
         usuarioValidator.validarUsuarioAtivo(usuario);
 
-        PlanoEstudo plano = planoEstudoFinder.findById(request.planoEstudoId());
-        desempenhoValidator.validarPropriedadePlano(usuario, plano);
+        PlanoEstudo plano = null;
+        if (request.planoEstudoId() != null) {
+            plano = planoEstudoFinder.findById(request.planoEstudoId());
+            desempenhoValidator.validarPropriedadePlano(usuario, plano);
+        }
 
         Materia materia = null;
-        if (request.materiaId() != null) {
+        if (request.materiaId() != null && plano != null) {
             materia = materiaFinder.findById(request.materiaId());
             temaRedacaoValidator.validarMateriaPertencePlano(materia, plano);
         }
 
         Topico topico = null;
-        if (request.topicoId() != null) {
+        if (request.topicoId() != null && plano != null) {
             topico = topicoFinder.findById(request.topicoId());
             temaRedacaoValidator.validarTopicoPertencePlano(topico, plano);
             if (materia != null) {
@@ -76,10 +79,11 @@ public class TemaRedacaoService {
                 materia,
                 topico,
                 request.bancaAlvo(),
-                request.generoTextualEfetivo()
+                request.generoTextualEfetivo(),
+                request.eixoTematico()
         );
 
-        PromptRequest promptRequest = new PromptRequest(prompt);
+        PromptRequest promptRequest = new PromptRequest(prompt, null, 0.2, 8192);
         TemaRedacaoIaPayload payload = aiOrchestratorService.generateStructured(promptRequest, TemaRedacaoIaPayload.class);
         temaRedacaoValidator.validarTemaGeradoIa(payload);
 
@@ -94,10 +98,15 @@ public class TemaRedacaoService {
         Usuario usuario = userFinder.findById(userId);
         usuarioValidator.validarUsuarioAtivo(usuario);
 
-        PlanoEstudo plano = planoEstudoFinder.findById(planoEstudoId);
-        desempenhoValidator.validarPropriedadePlano(usuario, plano);
+        Page<TemaRedacao> page;
+        if (planoEstudoId != null) {
+            PlanoEstudo plano = planoEstudoFinder.findById(planoEstudoId);
+            desempenhoValidator.validarPropriedadePlano(usuario, plano);
+            page = temaRedacaoRepository.findByPlanoEstudoOrderByCriadoEmDesc(plano, pageable);
+        } else {
+            page = temaRedacaoRepository.findAll(pageable);
+        }
 
-        Page<TemaRedacao> page = temaRedacaoRepository.findByPlanoEstudoOrderByCriadoEmDesc(plano, pageable);
         return page.map(tema -> {
             long totalSubmissoes = temaRedacaoRepository.countSubmissoesByTemaId(tema.getId());
             return TemaRedacaoMapper.toResumoResponse(tema, totalSubmissoes);

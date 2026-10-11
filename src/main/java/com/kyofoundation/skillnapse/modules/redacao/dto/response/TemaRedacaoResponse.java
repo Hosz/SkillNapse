@@ -7,6 +7,7 @@ public record TemaRedacaoResponse(
         UUID id,
         UUID planoEstudoId,
         String titulo,
+        String descricao,
         String textosMotivadores,
         String criteriosAvaliacao,
         Boolean geradoPorIa,

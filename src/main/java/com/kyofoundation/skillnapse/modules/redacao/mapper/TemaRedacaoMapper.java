@@ -7,17 +7,61 @@ import com.kyofoundation.skillnapse.modules.redacao.dto.response.TemaRedacaoResu
 import com.kyofoundation.skillnapse.modules.redacao.entity.TemaRedacao;
 import org.springframework.stereotype.Component;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 @Component
 public class TemaRedacaoMapper {
 
     public static TemaRedacao toEntity(TemaRedacaoIaPayload payload, PlanoEstudo plano) {
+        String tituloLimpo = lapidarTitulo(payload.titulo());
+        String descricao = (payload.descricao() != null && !payload.descricao().isBlank())
+                ? payload.descricao().trim()
+                : null;
+
         return TemaRedacao.builder()
                 .planoEstudo(plano)
-                .titulo(payload.titulo().trim())
+                .titulo(tituloLimpo)
+                .descricao(descricao)
                 .textosMotivadores(payload.textosMotivadores().trim())
                 .criteriosAvaliacao(payload.criteriosAvaliacao() != null ? payload.criteriosAvaliacao().trim() : null)
                 .geradoPorIa(true)
                 .build();
+    }
+
+    public static String lapidarTitulo(String tituloBruto) {
+        if (tituloBruto == null || tituloBruto.isBlank()) {
+            return "Proposta de Redação Discursiva";
+        }
+        String t = tituloBruto.trim();
+
+        // Se a IA tiver inserido comandos operacionais de prova no título, extrair ou limpar:
+        if (t.toLowerCase().startsWith("o texto dissertativo") || t.toLowerCase().startsWith("redija um texto") || t.toLowerCase().startsWith("o candidato deve")) {
+            Matcher m = Pattern.compile("(?i)(?:1\\)|tópicos?:)\\s*([^;.\n]+)").matcher(t);
+            if (m.find()) {
+                String extraido = m.group(1).trim();
+                if (extraido.length() >= 10 && extraido.length() <= 150) {
+                    return extraido;
+                }
+            }
+            Matcher mAspas = Pattern.compile("\"([^\"]{10,130})\"").matcher(t);
+            if (mAspas.find()) {
+                return mAspas.group(1).trim();
+            }
+        }
+
+        if (t.length() > 160) {
+            int ponto = t.indexOf('.');
+            if (ponto >= 10 && ponto <= 160) {
+                return t.substring(0, ponto).trim();
+            }
+            int doisPontos = t.indexOf(':');
+            if (doisPontos >= 10 && doisPontos <= 160) {
+                return t.substring(0, doisPontos).trim();
+            }
+            return t.substring(0, 157).trim() + "...";
+        }
+        return t;
     }
 
     public static TemaRedacaoResponse toResponse(TemaRedacao tema, long totalSubmissoes) {
@@ -25,6 +69,7 @@ public class TemaRedacaoMapper {
                 tema.getId(),
                 tema.getPlanoEstudo() != null ? tema.getPlanoEstudo().getId() : null,
                 tema.getTitulo(),
+                tema.getDescricao(),
                 tema.getTextosMotivadores(),
                 tema.getCriteriosAvaliacao(),
                 tema.getGeradoPorIa(),
