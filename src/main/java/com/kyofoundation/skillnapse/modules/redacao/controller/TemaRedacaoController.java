@@ -71,7 +71,7 @@ public class TemaRedacaoController {
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<Page<TemaRedacaoResumoResponse>> listar(
-            @RequestParam UUID planoEstudoId,
+            @RequestParam(required = false) UUID planoEstudoId,
             @ParameterObject Pageable pageable,
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt
     ) {

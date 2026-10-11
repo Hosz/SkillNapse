@@ -34,7 +34,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -70,9 +73,7 @@ public class SimuladoAdaptativoService {
         List<Topico> topicosAlvo = resolverTopicosAlvo(userId, plano, request, totalQuestoesDesejadas);
         simuladoAdaptativoValidator.validarTopicosPertencemPlano(topicosAlvo, plano);
 
-        String tituloSimulado = (request.bancaAlvo() != null && !request.bancaAlvo().isBlank())
-                ? "Simulado Adaptativo IA - " + request.bancaAlvo().trim()
-                : "Simulado Adaptativo IA - " + plano.getTitulo();
+        String tituloSimulado = gerarTituloSimulado(plano, topicosAlvo, request.bancaAlvo(), request.titulo());
 
         Simulado simulado = SimuladoAdaptativoMapper.toNovoSimulado(usuario, tituloSimulado);
         Simulado simuladoSalvo = simuladoRepository.save(simulado);
@@ -147,5 +148,64 @@ public class SimuladoAdaptativoService {
 
         List<Materia> materias = materiaRepository.findByPlanoEstudoOrderByOrdemAsc(plano);
         return topicoRepository.findByMateriaIn(materias);
+    }
+
+    private String gerarTituloSimulado(
+            PlanoEstudo plano,
+            List<Topico> topicosAlvo,
+            String bancaAlvo,
+            String tituloCustomizado
+    ) {
+        if (tituloCustomizado != null && !tituloCustomizado.isBlank()) {
+            return truncarTitulo(tituloCustomizado.trim());
+        }
+
+        String sufixoBanca = (bancaAlvo != null && !bancaAlvo.isBlank()) ? " (" + bancaAlvo.trim() + ")" : "";
+
+        if (topicosAlvo == null || topicosAlvo.isEmpty()) {
+            return truncarTitulo("Simulado: " + plano.getTitulo() + sufixoBanca);
+        }
+
+        if (topicosAlvo.size() == 1) {
+            Topico topico = topicosAlvo.get(0);
+            String materiaNome = (topico.getMateria() != null && topico.getMateria().getNome() != null)
+                    ? topico.getMateria().getNome()
+                    : "";
+
+            if (topico.getTopicoPai() != null) {
+                String subtopico = topico.getTitulo();
+                String base = materiaNome.isBlank()
+                        ? subtopico
+                        : materiaNome + " > " + subtopico;
+                return truncarTitulo("Simulado: " + base + sufixoBanca);
+            } else {
+                String topicoNome = topico.getTitulo();
+                String base = materiaNome.isBlank()
+                        ? topicoNome
+                        : materiaNome + " - " + topicoNome;
+                return truncarTitulo("Simulado: " + base + sufixoBanca);
+            }
+        }
+
+        Set<String> materias = topicosAlvo.stream()
+                .map(t -> (t.getMateria() != null) ? t.getMateria().getNome() : null)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        if (materias.size() == 1) {
+            String materiaNome = materias.iterator().next();
+            String base = materiaNome + " (" + topicosAlvo.size() + " tópicos)";
+            return truncarTitulo("Simulado: " + base + sufixoBanca);
+        }
+
+        String base = plano.getTitulo() + " (Geral - " + topicosAlvo.size() + " tópicos)";
+        return truncarTitulo("Simulado: " + base + sufixoBanca);
+    }
+
+    private String truncarTitulo(String titulo) {
+        if (titulo.length() <= 150) {
+            return titulo;
+        }
+        return titulo.substring(0, 147) + "...";
     }
 }

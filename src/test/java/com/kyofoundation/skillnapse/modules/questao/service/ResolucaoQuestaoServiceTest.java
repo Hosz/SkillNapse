@@ -59,6 +59,9 @@ class ResolucaoQuestaoServiceTest {
     private TopicoFinder topicoFinder;
 
     @Mock
+    private com.kyofoundation.skillnapse.modules.questao.support.ProficienciaTopicoSupport proficienciaTopicoSupport;
+
+    @Mock
     private TentativaQuestaoFinder tentativaQuestaoFinder;
 
     @Mock

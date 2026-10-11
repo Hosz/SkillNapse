@@ -22,6 +22,8 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -125,5 +127,21 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Validation Error"));
+    }
+
+    @Test
+    @DisplayName("Deve retornar dados do usuario autenticado via GET /auth/me com 200 OK")
+    void deveRetornarUsuarioAutenticadoComSucesso() throws Exception {
+        UUID userId = UUID.randomUUID();
+        RegistroResponse response = new RegistroResponse(userId, "Aluno Kyo", "aluno@skillnapse.com");
+
+        when(authService.obterUsuarioAutenticado(userId)).thenReturn(response);
+
+        mockMvc.perform(get("/auth/me")
+                        .with(jwt().jwt(builder -> builder.subject(userId.toString()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(userId.toString()))
+                .andExpect(jsonPath("$.nome").value("Aluno Kyo"))
+                .andExpect(jsonPath("$.email").value("aluno@skillnapse.com"));
     }
 }

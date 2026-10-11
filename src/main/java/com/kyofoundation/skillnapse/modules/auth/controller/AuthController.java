@@ -1,6 +1,7 @@
 package com.kyofoundation.skillnapse.modules.auth.controller;
 
 import com.kyofoundation.skillnapse.common.exception.ErrorResponse;
+import com.kyofoundation.skillnapse.common.exception.UnauthorizedException;
 import com.kyofoundation.skillnapse.modules.auth.dto.request.LoginRequest;
 import com.kyofoundation.skillnapse.modules.auth.dto.request.RefreshTokenRequest;
 import com.kyofoundation.skillnapse.modules.auth.dto.request.RegistroRequest;
@@ -8,6 +9,7 @@ import com.kyofoundation.skillnapse.modules.auth.dto.response.LoginResponse;
 import com.kyofoundation.skillnapse.modules.auth.dto.response.RegistroResponse;
 import com.kyofoundation.skillnapse.modules.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,10 +18,15 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -69,5 +76,21 @@ public class AuthController {
     })
     public ResponseEntity<LoginResponse> renovarToken(@RequestBody @Valid RefreshTokenRequest request) {
         return ResponseEntity.ok(authService.renovarToken(request.refreshToken()));
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Obter usuário autenticado", description = "Retorna os dados do usuário autenticado a partir do token JWT.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usuário autenticado retornado com sucesso",
+                    content = @Content(schema = @Schema(implementation = RegistroResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Token ausente, inválido ou expirado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<RegistroResponse> me(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+        if (jwt == null) {
+            throw new UnauthorizedException("Token de autenticação não informado ou inválido.");
+        }
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ResponseEntity.ok(authService.obterUsuarioAutenticado(userId));
     }
 }

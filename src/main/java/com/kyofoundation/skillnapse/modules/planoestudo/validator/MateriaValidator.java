@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 public class MateriaValidator {
 
     private static final Pattern HEX_COLOR_PATTERN = Pattern.compile("^#([A-Fa-f0-9]{6})$");
-    private static final int MAX_NOME_LENGTH = 100;
+    private static final int MAX_NOME_LENGTH = 255;
 
     public void validarCriacao(CriarMateriaRequest request) {
         if (request == null) {

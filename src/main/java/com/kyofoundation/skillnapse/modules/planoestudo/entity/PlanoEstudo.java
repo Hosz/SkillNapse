@@ -49,7 +49,7 @@ public class PlanoEstudo {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    @Column(name = "titulo", length = 150, nullable = false)
+    @Column(name = "titulo", length = 255, nullable = false)
     private String titulo;
 
     @Column(name = "descricao", columnDefinition = "TEXT")

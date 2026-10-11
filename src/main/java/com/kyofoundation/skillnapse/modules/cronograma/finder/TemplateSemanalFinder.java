@@ -9,6 +9,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -30,8 +34,34 @@ public class TemplateSemanalFinder {
                 .orElseThrow(() -> new ResourceNotFoundException("Template semanal não encontrado ou não existe."));
     }
 
+    @Transactional
     public TemplateSemanal findAtivoByUsuario(Usuario usuario) {
-        return templateSemanalRepository.findByUsuarioAndAtivoTrue(usuario)
-                .orElseThrow(() -> new ResourceNotFoundException("Nenhum template semanal ativo encontrado para o usuário."));
+        List<TemplateSemanal> ativos = templateSemanalRepository.findAllByUsuarioAndAtivoTrueOrderByCriadoEmDesc(usuario);
+        if (ativos.isEmpty()) {
+            return templateSemanalRepository.findByUsuarioAndAtivoTrue(usuario)
+                    .orElseThrow(() -> new ResourceNotFoundException("Nenhum template semanal ativo encontrado para o usuário."));
+        }
+        if (ativos.size() > 1) {
+            for (int i = 1; i < ativos.size(); i++) {
+                ativos.get(i).setAtivo(false);
+            }
+            templateSemanalRepository.saveAll(ativos.subList(1, ativos.size()));
+        }
+        return ativos.get(0);
+    }
+
+    @Transactional
+    public Optional<TemplateSemanal> findAtivoOpcionalByUsuario(Usuario usuario) {
+        List<TemplateSemanal> ativos = templateSemanalRepository.findAllByUsuarioAndAtivoTrueOrderByCriadoEmDesc(usuario);
+        if (ativos.isEmpty()) {
+            return templateSemanalRepository.findByUsuarioAndAtivoTrue(usuario);
+        }
+        if (ativos.size() > 1) {
+            for (int i = 1; i < ativos.size(); i++) {
+                ativos.get(i).setAtivo(false);
+            }
+            templateSemanalRepository.saveAll(ativos.subList(1, ativos.size()));
+        }
+        return Optional.of(ativos.get(0));
     }
 }

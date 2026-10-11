@@ -28,6 +28,19 @@ public record CriarBlocoHorarioRequest(
         UUID materiaId,
 
         @Schema(description = "Identificador opcional do tópico específico associado")
-        UUID topicoId
+        UUID topicoId,
+
+        @Schema(description = "Nome ou título do bloco de estudo", example = "Direito Constitucional - Direitos Fundamentais")
+        String titulo
 ) {
+    public CriarBlocoHorarioRequest(
+            DiaSemana diaSemana,
+            LocalTime horaInicio,
+            LocalTime horaFim,
+            TipoBloco tipoBloco,
+            UUID materiaId,
+            UUID topicoId
+    ) {
+        this(diaSemana, horaInicio, horaFim, tipoBloco, materiaId, topicoId, null);
+    }
 }

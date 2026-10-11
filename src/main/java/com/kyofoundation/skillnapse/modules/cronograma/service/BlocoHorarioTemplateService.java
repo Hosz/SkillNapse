@@ -97,8 +97,28 @@ public class BlocoHorarioTemplateService {
         blocoHorarioTemplateValidator.validarBlocoPertenceTemplate(blocoHorarioTemplate, templateSemanal);
         blocoHorarioTemplateValidator.validarEdicao(request, blocoHorarioTemplate, templateSemanal);
 
-        Materia materia = request.materiaId() != null ? materiaFinder.findById(request.materiaId()) : blocoHorarioTemplate.getMateria();
-        Topico topico = request.topicoId() != null ? topicoFinder.findById(request.topicoId()) : blocoHorarioTemplate.getTopico();
+        Materia materia;
+        if (Boolean.TRUE.equals(request.desvincularMateria())) {
+            materia = null;
+        } else if (request.materiaId() != null) {
+            materia = materiaFinder.findById(request.materiaId());
+        } else {
+            materia = blocoHorarioTemplate.getMateria();
+        }
+
+        Topico topico;
+        if (Boolean.TRUE.equals(request.desvincularTopico()) || Boolean.TRUE.equals(request.desvincularMateria())) {
+            topico = null;
+        } else if (request.topicoId() != null) {
+            topico = topicoFinder.findById(request.topicoId());
+        } else if (materia != null && blocoHorarioTemplate.getMateria() != null && !materia.getId().equals(blocoHorarioTemplate.getMateria().getId())) {
+            // Se a matéria foi alterada e nenhum novo tópico foi informado, reseta o tópico anterior
+            topico = null;
+        } else if (materia == null) {
+            topico = null;
+        } else {
+            topico = blocoHorarioTemplate.getTopico();
+        }
         blocoHorarioTemplateValidator.validarMateriaETopico(usuario, materia, topico);
 
         BlocoHorarioTemplateMapper.toEditarBlocoHorario(blocoHorarioTemplate, request, materia, topico);

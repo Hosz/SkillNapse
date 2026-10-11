@@ -83,6 +83,9 @@ public class ExcecaoDiaria {
     @JoinColumn(name = "topico_id")
     private Topico topico;
 
+    @Column(name = "titulo", length = 255)
+    private String titulo;
+
     @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

@@ -28,12 +28,19 @@ class TemaRedacaoValidatorTest {
     }
 
     @Test
-    @DisplayName("validarRequisicao deve lançar BadRequestException se planoEstudoId for nulo")
-    void deveLancarSePlanoEstudoIdNulo() {
-        GerarTemaRedacaoRequest request = new GerarTemaRedacaoRequest(null, null, null, "FGV", "Dissertativo");
+    @DisplayName("validarRequisicao deve lançar BadRequestException se planoEstudoId e eixoTematico forem nulos")
+    void deveLancarSePlanoEstudoIdEEixoTematicoNulos() {
+        GerarTemaRedacaoRequest request = new GerarTemaRedacaoRequest(null, null, null, "FGV", "Dissertativo", null);
         assertThatThrownBy(() -> validator.validarRequisicao(request))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("O ID do plano de estudo é obrigatório.");
+                .hasMessageContaining("Informe ao menos o plano de estudos ou um eixo temático");
+    }
+
+    @Test
+    @DisplayName("validarRequisicao deve passar se planoEstudoId for nulo mas eixoTematico for informado")
+    void devePassarSeEixoTematicoInformadoSemPlano() {
+        GerarTemaRedacaoRequest request = new GerarTemaRedacaoRequest(null, null, null, "FGV", "Dissertativo", "Segurança Pública");
+        assertThatCode(() -> validator.validarRequisicao(request)).doesNotThrowAnyException();
     }
 
     @Test
@@ -42,12 +49,12 @@ class TemaRedacaoValidatorTest {
         UUID planoId = UUID.randomUUID();
         String textoLongo = "a".repeat(51);
 
-        GerarTemaRedacaoRequest reqBancaLonga = new GerarTemaRedacaoRequest(planoId, null, null, textoLongo, null);
+        GerarTemaRedacaoRequest reqBancaLonga = new GerarTemaRedacaoRequest(planoId, null, null, textoLongo, null, null);
         assertThatThrownBy(() -> validator.validarRequisicao(reqBancaLonga))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("banca avaliadora não pode ultrapassar 50 caracteres");
 
-        GerarTemaRedacaoRequest reqGeneroLongo = new GerarTemaRedacaoRequest(planoId, null, null, null, textoLongo);
+        GerarTemaRedacaoRequest reqGeneroLongo = new GerarTemaRedacaoRequest(planoId, null, null, null, textoLongo, null);
         assertThatThrownBy(() -> validator.validarRequisicao(reqGeneroLongo))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("gênero textual não pode ultrapassar 50 caracteres");
@@ -56,7 +63,7 @@ class TemaRedacaoValidatorTest {
     @Test
     @DisplayName("validarRequisicao deve passar se dados forem válidos")
     void devePassarValidacaoRequisicaoValida() {
-        GerarTemaRedacaoRequest request = new GerarTemaRedacaoRequest(UUID.randomUUID(), null, null, "FCC", "Dissertativo");
+        GerarTemaRedacaoRequest request = new GerarTemaRedacaoRequest(UUID.randomUUID(), null, null, "FCC", "Dissertativo", null);
         assertThatCode(() -> validator.validarRequisicao(request)).doesNotThrowAnyException();
     }
 
@@ -106,6 +113,7 @@ class TemaRedacaoValidatorTest {
 
         TemaRedacaoIaPayload tituloCurto = new TemaRedacaoIaPayload(
                 "Curto",
+                "Descrição válida do tema para teste.",
                 "Textos motivadores adequados e longos com mais de 50 caracteres para teste de validação.",
                 "Critérios de avaliação com extensão adequada."
         );
@@ -115,6 +123,7 @@ class TemaRedacaoValidatorTest {
 
         TemaRedacaoIaPayload motivadoresCurtos = new TemaRedacaoIaPayload(
                 "Título com extensão adequada de concurso",
+                "Descrição válida do tema para teste.",
                 "Texto curto",
                 "Critérios de avaliação com extensão adequada."
         );
@@ -124,6 +133,7 @@ class TemaRedacaoValidatorTest {
 
         TemaRedacaoIaPayload criteriosCurtos = new TemaRedacaoIaPayload(
                 "Título com extensão adequada de concurso",
+                "Descrição válida do tema para teste.",
                 "Textos motivadores adequados e longos com mais de 50 caracteres para teste de validação.",
                 "Curto"
         );
@@ -137,6 +147,7 @@ class TemaRedacaoValidatorTest {
     void devePassarSeTemaGeradoValido() {
         TemaRedacaoIaPayload valido = new TemaRedacaoIaPayload(
                 "Desafios da Transparência Pública na Era dos Algoritmos",
+                "Contextualização sobre o uso de algoritmos no setor público.",
                 "Texto I: A Lei de Acesso à Informação exige publicidade ativa. Texto II: Sistemas automatizados de decisão impactam o cidadão.",
                 "Desenvolva texto dissertativo-argumentativo em até 30 linhas, abordando: 1) Dever de transparência; 2) Riscos de opacidade."
         );

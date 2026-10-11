@@ -13,14 +13,21 @@ public record GerarSimuladoAdaptativoRequest(
         UUID planoEstudoId,
 
         @Min(value = 3, message = "O simulado adaptativo deve conter no mínimo 3 questões.")
-        @Max(value = 15, message = "O simulado adaptativo pode conter no máximo 15 questões por geração.")
+        @Max(value = 60, message = "O simulado adaptativo pode conter no máximo 60 questões por geração.")
         Integer quantidadeQuestoes,
 
         @Size(max = 50, message = "O nome da banca avaliadora não pode ultrapassar 50 caracteres.")
         String bancaAlvo,
 
-        List<UUID> topicoIds
+        List<UUID> topicoIds,
+
+        @Size(max = 150, message = "O título customizado do simulado não pode ultrapassar 150 caracteres.")
+        String titulo
 ) {
+    public GerarSimuladoAdaptativoRequest(UUID planoEstudoId, Integer quantidadeQuestoes, String bancaAlvo, List<UUID> topicoIds) {
+        this(planoEstudoId, quantidadeQuestoes, bancaAlvo, topicoIds, null);
+    }
+
     public int quantidadeEfetiva() {
         return (quantidadeQuestoes != null && quantidadeQuestoes >= 3) ? quantidadeQuestoes : 5;
     }

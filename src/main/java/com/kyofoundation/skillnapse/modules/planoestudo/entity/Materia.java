@@ -47,7 +47,7 @@ public class Materia {
     @JoinColumn(name = "plano_estudo_id", nullable = false)
     private PlanoEstudo planoEstudo;
 
-    @Column(name = "nome", length = 100, nullable = false)
+    @Column(name = "nome", length = 255, nullable = false)
     private String nome;
 
     @Column(name = "cor_hex", length = 7)

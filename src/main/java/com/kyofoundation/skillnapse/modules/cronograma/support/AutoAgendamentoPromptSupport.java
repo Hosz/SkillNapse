@@ -43,6 +43,15 @@ public class AutoAgendamentoPromptSupport {
         String janelasTexto = formatarJanelas(request.disponibilidades());
         String catalogoConteudo = formatarCatalogoMateriasETopicos(materias, topicos);
 
+        String instrucoesTexto = (request.instrucoesPersonalizadas() != null && !request.instrucoesPersonalizadas().isBlank())
+                ? String.format("""
+
+                --- SITUAÇÃO ESPECÍFICA E INSTRUÇÕES PERSONALIZADAS DO ESTUDANTE ---
+                %s
+                DIRETRIZ PEDAGÓGICA: Leve em consideração máxima e prioritária a rotina, particularidades de horário/trabalho, facilidades e dificuldades descritas pelo estudante ao distribuir as matérias na grade.
+                """, request.instrucoesPersonalizadas().trim())
+                : "";
+
         String userPrompt = String.format("""
                 Plano de Estudo: "%s" (%s)
                 Estratégia Pedagógica Solicitada: %s
@@ -50,7 +59,7 @@ public class AutoAgendamentoPromptSupport {
                 Intervalo de Descanso entre Blocos: %d minutos
                 Incluir Revisões: %s
                 Incluir Simulados: %s
-
+                %s
                 --- JANELAS DE DISPONIBILIDADE SEMANAL ---
                 %s
 
@@ -66,6 +75,7 @@ public class AutoAgendamentoPromptSupport {
                 request.intervaloDescansoMinutosEfetivo(),
                 request.incluirRevisaoEfetivo() ? "Sim" : "Não",
                 request.incluirSimuladoEfetivo() ? "Sim" : "Não",
+                instrucoesTexto,
                 janelasTexto,
                 catalogoConteudo
         );

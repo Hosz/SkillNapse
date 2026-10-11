@@ -16,7 +16,13 @@ public interface TemplateSemanalRepository extends JpaRepository<TemplateSemanal
 
     Page<TemplateSemanal> findAllByUsuarioAndAtivo(Usuario usuario, boolean ativo, Pageable pageable);
 
-    Optional<TemplateSemanal> findByUsuarioAndAtivoTrue(Usuario usuario);
-
     List<TemplateSemanal> findAllByUsuarioAndAtivoTrue(Usuario usuario);
+
+    List<TemplateSemanal> findAllByUsuarioAndAtivoTrueOrderByCriadoEmDesc(Usuario usuario);
+
+    Optional<TemplateSemanal> findFirstByUsuarioAndAtivoTrueOrderByCriadoEmDesc(Usuario usuario);
+
+    default Optional<TemplateSemanal> findByUsuarioAndAtivoTrue(Usuario usuario) {
+        return findFirstByUsuarioAndAtivoTrueOrderByCriadoEmDesc(usuario);
+    }
 }

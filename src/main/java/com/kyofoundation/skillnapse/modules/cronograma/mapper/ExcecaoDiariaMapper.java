@@ -40,6 +40,7 @@ public class ExcecaoDiariaMapper {
                 .tipoBloco(tipoBloco)
                 .materia(materia)
                 .topico(topico)
+                .titulo(request.titulo())
                 .build();
     }
 
@@ -63,7 +64,8 @@ public class ExcecaoDiariaMapper {
                 materiaId,
                 materiaNome,
                 topicoId,
-                topicoTitulo
+                topicoTitulo,
+                excecaoDiaria.getTitulo()
         );
     }
 
@@ -96,6 +98,9 @@ public class ExcecaoDiariaMapper {
         }
         if (topicoNovo != null) {
             excecaoDiaria.setTopico(topicoNovo);
+        }
+        if (request.titulo() != null) {
+            excecaoDiaria.setTitulo(request.titulo());
         }
     }
 }

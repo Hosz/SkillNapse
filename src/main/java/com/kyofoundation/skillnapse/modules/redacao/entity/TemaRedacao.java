@@ -51,6 +51,9 @@ public class TemaRedacao {
     @Column(name = "titulo", length = 200, nullable = false)
     private String titulo;
 
+    @Column(name = "descricao", columnDefinition = "TEXT")
+    private String descricao;
+
     @Column(name = "textos_motivadores", columnDefinition = "TEXT", nullable = false)
     private String textosMotivadores;
 

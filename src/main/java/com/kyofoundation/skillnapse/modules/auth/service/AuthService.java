@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -121,5 +122,12 @@ public class AuthService {
                 tokenAtualizacaoRepository.save(token);
             });
         }
+    }
+
+    @Transactional(readOnly = true)
+    public RegistroResponse obterUsuarioAutenticado(UUID userId) {
+        Usuario usuario = userFinder.findById(userId);
+        usuarioValidator.validarUsuarioAtivo(usuario);
+        return AuthMapper.toRegistroResponse(usuario);
     }
 }

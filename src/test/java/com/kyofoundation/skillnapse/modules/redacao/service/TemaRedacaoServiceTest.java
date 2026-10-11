@@ -117,7 +117,7 @@ class TemaRedacaoServiceTest {
     @DisplayName("Deve gerar tema de redação com todos os parâmetros com sucesso")
     void deveGerarTemaComSucesso() {
         GerarTemaRedacaoRequest request = new GerarTemaRedacaoRequest(
-                plano.getId(), materia.getId(), topico.getId(), "Cebraspe", "Estudo de Caso"
+                plano.getId(), materia.getId(), topico.getId(), "Cebraspe", "Estudo de Caso", null
         );
 
         when(userFinder.findById(usuario.getId())).thenReturn(usuario);
@@ -126,11 +126,12 @@ class TemaRedacaoServiceTest {
         when(topicoFinder.findById(topico.getId())).thenReturn(topico);
 
         when(promptTemaRedacaoSupport.construirPromptGeracao(
-                eq(plano), eq(materia), eq(topico), eq("Cebraspe"), eq("Estudo de Caso")
+                eq(plano), eq(materia), eq(topico), eq("Cebraspe"), eq("Estudo de Caso"), isNull()
         )).thenReturn("Prompt de Redação Formatado");
 
         TemaRedacaoIaPayload payload = new TemaRedacaoIaPayload(
                 "O Equilíbrio Fiscal e a Responsabilidade na Gestão Pública",
+                "Contextualização sobre limites fiscais.",
                 "Texto I: A LRF impõe limites de despesas. Texto II: Sanções por descumprimento.",
                 "Redija até 30 linhas abordando os limites de despesa de pessoal e mecanismos sancionatórios."
         );

@@ -55,7 +55,7 @@ public class Topico {
     @JoinColumn(name = "topico_pai_id")
     private Topico topicoPai;
 
-    @Column(name = "titulo", length = 200, nullable = false)
+    @Column(name = "titulo", length = 1000, nullable = false)
     private String titulo;
 
     @Builder.Default

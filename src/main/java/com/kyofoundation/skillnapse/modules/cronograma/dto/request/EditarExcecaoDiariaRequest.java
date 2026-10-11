@@ -27,6 +27,20 @@ public record EditarExcecaoDiariaRequest(
         UUID materiaId,
 
         @Schema(description = "ID do tópico associado")
-        UUID topicoId
+        UUID topicoId,
+
+        @Schema(description = "Título personalizado do bloco", example = "Revisão Geral")
+        String titulo
 ) {
+    public EditarExcecaoDiariaRequest(
+            TipoAcaoExcecao tipoAcao,
+            UUID blocoTemplateOrigem,
+            LocalTime horaInicio,
+            LocalTime horaFim,
+            TipoBloco tipoBloco,
+            UUID materiaId,
+            UUID topicoId
+    ) {
+        this(tipoAcao, blocoTemplateOrigem, horaInicio, horaFim, tipoBloco, materiaId, topicoId, null);
+    }
 }

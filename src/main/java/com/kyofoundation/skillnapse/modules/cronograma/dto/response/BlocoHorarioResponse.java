@@ -14,6 +14,7 @@ public record BlocoHorarioResponse(
         LocalTime horaInicio,
         LocalTime horaFim,
         TipoBloco tipoBloco,
+        String titulo,
         UUID materiaId,
         String materiaNome,
         UUID topicoId,
@@ -32,6 +33,22 @@ public record BlocoHorarioResponse(
             UUID topicoId,
             String topicoTitulo
     ) {
-        this(id, templateSemanalId, diaSemana, horaInicio, horaFim, tipoBloco, materiaId, materiaNome, topicoId, topicoTitulo, List.of());
+        this(id, templateSemanalId, diaSemana, horaInicio, horaFim, tipoBloco, topicoTitulo != null ? topicoTitulo : materiaNome, materiaId, materiaNome, topicoId, topicoTitulo, List.of());
+    }
+
+    public BlocoHorarioResponse(
+            UUID id,
+            UUID templateSemanalId,
+            DiaSemana diaSemana,
+            LocalTime horaInicio,
+            LocalTime horaFim,
+            TipoBloco tipoBloco,
+            UUID materiaId,
+            String materiaNome,
+            UUID topicoId,
+            String topicoTitulo,
+            List<TopicoRevisaoItemResponse> topicosRevisao
+    ) {
+        this(id, templateSemanalId, diaSemana, horaInicio, horaFim, tipoBloco, topicoTitulo != null ? topicoTitulo : materiaNome, materiaId, materiaNome, topicoId, topicoTitulo, topicosRevisao);
     }
 }

@@ -14,7 +14,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class PdfTextExtractorSupport {
 
-    private static final int MAX_CARACTERES_TEXTO = 120_000;
+    private static final int MAX_CARACTERES_TEXTO = 400_000;
 
     public String extrairTexto(MultipartFile arquivo) {
         if (arquivo == null || arquivo.isEmpty()) {

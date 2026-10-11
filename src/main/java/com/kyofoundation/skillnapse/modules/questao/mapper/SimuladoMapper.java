@@ -31,6 +31,15 @@ public class SimuladoMapper {
     }
 
     public static SimuladoResponse toResponse(Simulado simulado, long totalQuestoes, long totalAcertos) {
+        return toResponseComQuestoes(simulado, totalQuestoes, totalAcertos, java.util.List.of());
+    }
+
+    public static SimuladoResponse toResponseComQuestoes(
+            Simulado simulado,
+            long totalQuestoes,
+            long totalAcertos,
+            java.util.List<com.kyofoundation.skillnapse.modules.questao.dto.response.QuestaoItemSimuladoResponse> questoes
+    ) {
         if (simulado == null) {
             return null;
         }
@@ -50,7 +59,8 @@ public class SimuladoMapper {
                 simulado.getCriadoEm(),
                 totalQuestoes,
                 totalAcertos,
-                percentual
+                percentual,
+                questoes != null ? questoes : java.util.List.of()
         );
     }
 }

@@ -19,6 +19,7 @@ import com.kyofoundation.skillnapse.modules.questao.finder.SimuladoFinder;
 import com.kyofoundation.skillnapse.modules.questao.finder.TentativaQuestaoFinder;
 import com.kyofoundation.skillnapse.modules.questao.mapper.ResolucaoQuestaoMapper;
 import com.kyofoundation.skillnapse.modules.questao.repository.TentativaQuestaoRepository;
+import com.kyofoundation.skillnapse.modules.questao.support.ProficienciaTopicoSupport;
 import com.kyofoundation.skillnapse.modules.questao.validator.ResolucaoQuestaoValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -44,6 +45,7 @@ public class ResolucaoQuestaoService {
     private final UsuarioValidator usuarioValidator;
     private final ResolucaoQuestaoValidator resolucaoQuestaoValidator;
     private final OfensivaService ofensivaService;
+    private final ProficienciaTopicoSupport proficienciaTopicoSupport;
 
     @Transactional
     public ResultadoResolucaoResponse responder(UUID questaoId, ResponderQuestaoRequest request, UUID userId) {
@@ -83,6 +85,10 @@ public class ResolucaoQuestaoService {
                 ? salva.getRespondidoEm().atZone(ZoneOffset.UTC).toLocalDate()
                 : LocalDate.now(ZoneOffset.UTC);
         ofensivaService.registrarEstudoSilencioso(usuario, dataEstudo);
+
+        if (simulado == null && topico != null) {
+            proficienciaTopicoSupport.atualizarProficienciaTopico(usuario, topico);
+        }
 
         return ResolucaoQuestaoMapper.toResultadoResponse(salva, alternativaCorreta);
     }

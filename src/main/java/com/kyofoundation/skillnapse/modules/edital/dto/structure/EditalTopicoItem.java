@@ -10,7 +10,7 @@ public record EditalTopicoItem(
         @NotBlank
         String titulo,
 
-        @Min(1) @Max(5)
+        @Min(1) @Max(10)
         Integer pesoEdital,
         List<String> subtopicos
 ) {

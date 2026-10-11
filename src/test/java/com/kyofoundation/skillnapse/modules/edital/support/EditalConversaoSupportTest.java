@@ -104,4 +104,52 @@ class EditalConversaoSupportTest {
         verify(rascunhoEditalRepository).save(rascunho);
         assertThat(rascunho.getStatus()).isEqualTo(StatusRascunhoEdital.CONVERTIDO);
     }
+
+    @Test
+    @DisplayName("Deve normalizar e truncar com segurança titulos longos de tópicos e matérias sem lançar exceção")
+    void deveNormalizarTitulosLongosComSeguranca() {
+        String tituloLongoTopico = "Topico Extenso ".repeat(100); // > 1000 caracteres
+        String subTituloLongo = "Subtopico Extenso ".repeat(80); // > 1000 caracteres
+        String nomeLongoMateria = "Materia Extensa ".repeat(30); // > 255 caracteres
+
+        EditalTopicoItem topicoItem = new EditalTopicoItem(tituloLongoTopico, 5, List.of(subTituloLongo));
+        EditalMaterialItem materiaItem = new EditalMaterialItem(nomeLongoMateria, List.of(topicoItem));
+        EditalArvoreEstruturada arvore = new EditalArvoreEstruturada("Concurso Teste", "Cargo Teste", List.of(materiaItem));
+
+        String json = EditalTreeMapper.toJson(arvore);
+        RascunhoEdital rascunho = RascunhoEdital.builder()
+                .id(UUID.randomUUID())
+                .usuario(usuario)
+                .nomeArquivo("edital-longo.pdf")
+                .conteudoExtraidoJson(json)
+                .status(StatusRascunhoEdital.AGUARDANDO_APROVACAO)
+                .build();
+
+        when(planoEstudoRepository.save(any(PlanoEstudo.class))).thenAnswer(i -> {
+            PlanoEstudo p = i.getArgument(0);
+            p.setId(UUID.randomUUID());
+            return p;
+        });
+        when(materiaRepository.save(any(Materia.class))).thenAnswer(i -> {
+            Materia m = i.getArgument(0);
+            assertThat(m.getNome().length()).isLessThanOrEqualTo(255);
+            m.setId(UUID.randomUUID());
+            return m;
+        });
+        when(topicoRepository.save(any(Topico.class))).thenAnswer(i -> {
+            Topico t = i.getArgument(0);
+            assertThat(t.getTitulo().length()).isLessThanOrEqualTo(1000);
+            t.setId(UUID.randomUUID());
+            return t;
+        });
+        when(rascunhoEditalRepository.save(any(RascunhoEdital.class))).thenAnswer(i -> i.getArgument(0));
+
+        ConverterRascunhoEditalRequest request = new ConverterRascunhoEditalRequest("Plano Extenso ".repeat(30), "Descricao");
+
+        ConversaoEditalResponse response = support.executarConversao(usuario, rascunho, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.tituloPlano().length()).isLessThanOrEqualTo(255);
+        verify(topicoRepository, times(2)).save(any(Topico.class));
+    }
 }

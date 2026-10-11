@@ -5,6 +5,7 @@ import com.kyofoundation.skillnapse.modules.edital.dto.request.AtualizarRascunho
 import com.kyofoundation.skillnapse.modules.edital.dto.request.ConverterRascunhoEditalRequest;
 import com.kyofoundation.skillnapse.modules.edital.dto.response.ConversaoEditalResponse;
 import com.kyofoundation.skillnapse.modules.edital.dto.response.RascunhoEditalResponse;
+import com.kyofoundation.skillnapse.modules.edital.dto.structure.EditalCargosDetectados;
 import com.kyofoundation.skillnapse.modules.edital.service.EditalParserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,6 +46,22 @@ import java.util.UUID;
 public class EditalParserController {
 
     private final EditalParserService editalParserService;
+
+    @PostMapping(value = "/detectar-cargos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Detectar cargos disponíveis no edital", description = "Analisa o PDF do edital via IA e identifica todos os cargos ou especialidades disponíveis para seleção do usuário.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Cargos identificados com sucesso",
+                    content = @Content(schema = @Schema(implementation = EditalCargosDetectados.class))),
+            @ApiResponse(responseCode = "400", description = "Arquivo inválido, vazio ou não compatível",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<EditalCargosDetectados> detectarCargos(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @Parameter(description = "Arquivo PDF do edital a ser analisado (máx 25MB)")
+            @RequestParam("arquivo") MultipartFile arquivo) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ResponseEntity.ok(editalParserService.detectarCargos(userId, arquivo));
+    }
 
     @PostMapping(value = "/parse", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload e parsing de edital em PDF", description = "Extrai o conteúdo programático do edital em PDF e cria um rascunho com a árvore estruturada via Spring AI.")

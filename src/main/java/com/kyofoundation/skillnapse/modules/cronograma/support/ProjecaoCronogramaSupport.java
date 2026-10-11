@@ -81,6 +81,9 @@ public class ProjecaoCronogramaSupport {
                         .toList()
                 : List.of();
 
+        String titulo = bloco.getTitulo() != null ? bloco.getTitulo()
+                : (topicoTitulo != null ? topicoTitulo : (materiaNome != null ? materiaNome : "Bloco de Estudo"));
+
         return new BlocoAgendaDiariaResponse(
                 bloco.getId(),
                 TipoOrigemBloco.TEMPLATE,
@@ -94,6 +97,7 @@ public class ProjecaoCronogramaSupport {
                 materiaNome,
                 topicoId,
                 topicoTitulo,
+                titulo,
                 topicosRevisao
         );
     }
@@ -133,6 +137,10 @@ public class ProjecaoCronogramaSupport {
                                 .toList()
                         : List.of());
 
+        String titulo = excecao.getTitulo() != null ? excecao.getTitulo()
+                : (blocoOriginal.getTitulo() != null ? blocoOriginal.getTitulo()
+                : (topicoTitulo != null ? topicoTitulo : (materiaNome != null ? materiaNome : "Bloco de Estudo")));
+
         return new BlocoAgendaDiariaResponse(
                 excecao.getId(),
                 TipoOrigemBloco.EXCECAO,
@@ -146,6 +154,7 @@ public class ProjecaoCronogramaSupport {
                 materiaNome,
                 topicoId,
                 topicoTitulo,
+                titulo,
                 topicosRevisao
         );
     }
@@ -166,6 +175,9 @@ public class ProjecaoCronogramaSupport {
                         .toList()
                 : List.of();
 
+        String titulo = excecao.getTitulo() != null ? excecao.getTitulo()
+                : (topicoTitulo != null ? topicoTitulo : (materiaNome != null ? materiaNome : "Bloco Avulso"));
+
         return new BlocoAgendaDiariaResponse(
                 excecao.getId(),
                 TipoOrigemBloco.EXCECAO,
@@ -179,6 +191,7 @@ public class ProjecaoCronogramaSupport {
                 materiaNome,
                 topicoId,
                 topicoTitulo,
+                titulo,
                 topicosRevisao
         );
     }

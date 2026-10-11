@@ -10,10 +10,12 @@ import com.kyofoundation.skillnapse.modules.edital.dto.request.ConverterRascunho
 import com.kyofoundation.skillnapse.modules.edital.dto.response.ConversaoEditalResponse;
 import com.kyofoundation.skillnapse.modules.edital.dto.response.RascunhoEditalResponse;
 import com.kyofoundation.skillnapse.modules.edital.dto.structure.EditalArvoreEstruturada;
+import com.kyofoundation.skillnapse.modules.edital.dto.structure.EditalCargosDetectados;
 import com.kyofoundation.skillnapse.modules.edital.entity.RascunhoEdital;
 import com.kyofoundation.skillnapse.modules.edital.enums.StatusRascunhoEdital;
 import com.kyofoundation.skillnapse.modules.edital.finder.RascunhoEditalFinder;
 import com.kyofoundation.skillnapse.modules.edital.repository.RascunhoEditalRepository;
+import com.kyofoundation.skillnapse.modules.edital.support.EditalCargoSupport;
 import com.kyofoundation.skillnapse.modules.edital.support.EditalConversaoSupport;
 import com.kyofoundation.skillnapse.modules.edital.support.EditalPromptSupport;
 import com.kyofoundation.skillnapse.modules.edital.support.PdfTextExtractorSupport;
@@ -68,6 +70,9 @@ class EditalParserServiceTest {
     private EditalConversaoSupport editalConversaoSupport;
 
     @Mock
+    private EditalCargoSupport editalCargoSupport;
+
+    @Mock
     private AiOrchestratorService aiOrchestratorService;
 
     @Mock
@@ -84,15 +89,45 @@ class EditalParserServiceTest {
     }
 
     @Test
+    @DisplayName("Deve detectar cargos disponíveis no edital via IA com sucesso")
+    void deveDetectarCargosComSucesso() {
+        MockMultipartFile arquivo = new MockMultipartFile("arquivo", "edital_tjpe.pdf", "application/pdf", "bytes".getBytes());
+        PromptRequest promptCargos = new PromptRequest("detectar", "sys");
+        EditalCargosDetectados detectados = new EditalCargosDetectados("TJPE 2026", List.of("Técnico Judiciário", "Analista Judiciário"));
+
+        when(userFinder.findById(usuario.getId())).thenReturn(usuario);
+        when(pdfTextExtractorSupport.extrairTexto(arquivo)).thenReturn("Texto do edital TJPE");
+        when(editalPromptSupport.criarPromptParaDeteccaoCargos("Texto do edital TJPE")).thenReturn(promptCargos);
+        when(aiOrchestratorService.generateStructured(promptCargos, EditalCargosDetectados.class)).thenReturn(detectados);
+        when(editalCargoSupport.enriquecerCargosSeNecessario("Texto do edital TJPE", detectados.cargos()))
+                .thenReturn(detectados.cargos());
+
+        EditalCargosDetectados resultado = service.detectarCargos(usuario.getId(), arquivo);
+
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.nomeConcurso()).isEqualTo("TJPE 2026");
+        assertThat(resultado.cargos()).containsExactly("Técnico Judiciário", "Analista Judiciário");
+
+        verify(usuarioValidator).validarUsuarioAtivo(usuario);
+        verify(editalUploadValidator).validarArquivo(arquivo);
+    }
+
+    @Test
     @DisplayName("Deve fazer upload de edital e gerar rascunho com sucesso")
     void deveFazerUploadDeEditalComSucesso() {
         MockMultipartFile arquivo = new MockMultipartFile("arquivo", "edital.pdf", "application/pdf", "bytes".getBytes());
         EditalArvoreEstruturada arvore = new EditalArvoreEstruturada("Concurso BB", "Escriturário", List.of());
+        PromptRequest promptCargos = new PromptRequest("cargos", "sys");
         PromptRequest promptRequest = new PromptRequest("user", "sys");
+        EditalCargosDetectados cargosDetectados = new EditalCargosDetectados("Concurso BB", List.of("Escriturário"));
 
         when(userFinder.findById(usuario.getId())).thenReturn(usuario);
         when(pdfTextExtractorSupport.extrairTexto(arquivo)).thenReturn("Texto extraido");
-        when(editalPromptSupport.criarPromptParaExtracao("Texto extraido")).thenReturn(promptRequest);
+        when(editalPromptSupport.criarPromptParaDeteccaoCargos("Texto extraido")).thenReturn(promptCargos);
+        when(aiOrchestratorService.generateStructured(promptCargos, EditalCargosDetectados.class)).thenReturn(cargosDetectados);
+        when(editalCargoSupport.enriquecerCargosSeNecessario("Texto extraido", cargosDetectados.cargos()))
+                .thenReturn(cargosDetectados.cargos());
+        when(editalPromptSupport.criarPromptParaExtracao("Texto extraido", "Escriturário")).thenReturn(promptRequest);
         when(aiOrchestratorService.generateStructured(promptRequest, EditalArvoreEstruturada.class)).thenReturn(arvore);
         when(rascunhoEditalRepository.save(any(RascunhoEdital.class))).thenAnswer(i -> {
             RascunhoEdital r = i.getArgument(0);
@@ -107,6 +142,55 @@ class EditalParserServiceTest {
 
         verify(usuarioValidator).validarUsuarioAtivo(usuario);
         verify(editalUploadValidator).validarArquivo(arquivo);
+        verify(rascunhoEditalRepository).save(any(RascunhoEdital.class));
+    }
+
+    @Test
+    @DisplayName("Deve retornar opções de cargos quando IA identificar múltiplos cargos e usuário não informar cargoAlvo")
+    void deveRetornarOpcoesDeCargoQuandoIaIdentificarMultiplosCargos() {
+        MockMultipartFile arquivo = new MockMultipartFile("arquivo", "edital_pmpe.pdf", "application/pdf", "bytes".getBytes());
+        PromptRequest promptCargos = new PromptRequest("detectar cargos", "sys");
+        EditalCargosDetectados detectados = new EditalCargosDetectados("PMPE 2024", List.of("Soldado PM", "Oficial PM"));
+
+        when(userFinder.findById(usuario.getId())).thenReturn(usuario);
+        when(pdfTextExtractorSupport.extrairTexto(arquivo)).thenReturn("Texto com múltiplos cargos");
+        when(editalPromptSupport.criarPromptParaDeteccaoCargos("Texto com múltiplos cargos")).thenReturn(promptCargos);
+        when(aiOrchestratorService.generateStructured(promptCargos, EditalCargosDetectados.class)).thenReturn(detectados);
+        when(editalCargoSupport.enriquecerCargosSeNecessario("Texto com múltiplos cargos", detectados.cargos()))
+                .thenReturn(detectados.cargos());
+
+        RascunhoEditalResponse response = service.uploadEditalPdf(usuario.getId(), arquivo, null);
+
+        assertThat(response).isNotNull();
+        assertThat(response.precisaSelecionarCargo()).isTrue();
+        assertThat(response.cargosDisponiveis()).containsExactly("Soldado PM", "Oficial PM");
+        assertThat(response.conteudo().nomeConcurso()).isEqualTo("PMPE 2024");
+        verify(rascunhoEditalRepository, never()).save(any(RascunhoEdital.class));
+    }
+
+    @Test
+    @DisplayName("Deve gerar árvore direcionada diretamente quando cargoAlvo for informado")
+    void deveGerarArvoreDirecionadaQuandoCargoAlvoForInformado() {
+        MockMultipartFile arquivo = new MockMultipartFile("arquivo", "edital_pmpe.pdf", "application/pdf", "bytes".getBytes());
+        EditalArvoreEstruturada arvore = new EditalArvoreEstruturada("PMPE 2024", "Soldado PM", List.of());
+        PromptRequest promptRequest = new PromptRequest("extrair soldado", "sys");
+
+        when(userFinder.findById(usuario.getId())).thenReturn(usuario);
+        when(pdfTextExtractorSupport.extrairTexto(arquivo)).thenReturn("Texto extraido");
+        when(editalPromptSupport.criarPromptParaExtracao("Texto extraido", "Soldado PM")).thenReturn(promptRequest);
+        when(aiOrchestratorService.generateStructured(promptRequest, EditalArvoreEstruturada.class)).thenReturn(arvore);
+        when(rascunhoEditalRepository.save(any(RascunhoEdital.class))).thenAnswer(i -> {
+            RascunhoEdital r = i.getArgument(0);
+            r.setId(UUID.randomUUID());
+            return r;
+        });
+
+        RascunhoEditalResponse response = service.uploadEditalPdf(usuario.getId(), arquivo, "Soldado PM");
+
+        assertThat(response).isNotNull();
+        assertThat(response.precisaSelecionarCargo()).isFalse();
+        assertThat(response.conteudo().cargo()).isEqualTo("Soldado PM");
+        verify(editalPromptSupport, never()).criarPromptParaDeteccaoCargos(any());
         verify(rascunhoEditalRepository).save(any(RascunhoEdital.class));
     }
 
