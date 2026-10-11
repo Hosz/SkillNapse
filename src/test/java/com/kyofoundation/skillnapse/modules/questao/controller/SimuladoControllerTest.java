@@ -26,8 +26,10 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -155,5 +157,18 @@ class SimuladoControllerTest {
                 .andExpect(jsonPath("$.id").value(simId.toString()))
                 .andExpect(jsonPath("$.concluido").value(true))
                 .andExpect(jsonPath("$.percentualAcerto").value(90.0));
+    }
+
+    @Test
+    @DisplayName("Deve excluir simulado com status 204 No Content")
+    void deveExcluirSimuladoComSucesso() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID simId = UUID.randomUUID();
+
+        doNothing().when(simuladoService).excluir(simId, userId);
+
+        mockMvc.perform(delete("/api/v1/simulados/{id}", simId)
+                        .with(jwt().jwt(builder -> builder.subject(userId.toString()))))
+                .andExpect(status().isNoContent());
     }
 }

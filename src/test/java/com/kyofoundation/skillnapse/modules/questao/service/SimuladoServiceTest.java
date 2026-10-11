@@ -7,6 +7,7 @@ import com.kyofoundation.skillnapse.modules.auth.validator.UsuarioValidator;
 import com.kyofoundation.skillnapse.modules.questao.dto.request.CriarSimuladoRequest;
 import com.kyofoundation.skillnapse.modules.questao.dto.response.SimuladoResponse;
 import com.kyofoundation.skillnapse.modules.questao.entity.Simulado;
+import com.kyofoundation.skillnapse.modules.questao.entity.TentativaQuestao;
 import com.kyofoundation.skillnapse.modules.questao.enums.TipoSimulado;
 import com.kyofoundation.skillnapse.modules.questao.finder.SimuladoFinder;
 import com.kyofoundation.skillnapse.modules.questao.finder.TentativaQuestaoFinder;
@@ -47,6 +48,9 @@ class SimuladoServiceTest {
 
     @Mock
     private TentativaQuestaoFinder tentativaQuestaoFinder;
+
+    @Mock
+    private com.kyofoundation.skillnapse.modules.questao.support.ProficienciaTopicoSupport proficienciaTopicoSupport;
 
     @Mock
     private UserFinder userFinder;
@@ -202,5 +206,51 @@ class SimuladoServiceTest {
         assertThat(response.concluido()).isTrue();
         assertThat(response.percentualAcerto()).isEqualTo(100.0);
         verify(usuarioValidator).validarUsuarioAtivo(usuario);
+    }
+
+    @Test
+    @DisplayName("Deve delegar atualização de proficiência dos tópicos ao concluir simulado")
+    void deveAtualizarProficienciaAoConcluirSimulado() {
+        UUID userId = UUID.randomUUID();
+        UUID simId = UUID.randomUUID();
+        Usuario usuario = Usuario.builder().id(userId).ativo(true).build();
+        Simulado sim = Simulado.builder()
+                .id(simId)
+                .usuario(usuario)
+                .titulo("Simulado TCU")
+                .tipo(TipoSimulado.ADAPTATIVO_IA)
+                .concluido(false)
+                .build();
+
+        when(userFinder.findById(userId)).thenReturn(usuario);
+        doNothing().when(usuarioValidator).validarUsuarioAtivo(usuario);
+        when(simuladoFinder.findById(simId)).thenReturn(sim);
+        doNothing().when(simuladoValidator).validarPropriedade(usuario, sim);
+        doNothing().when(simuladoValidator).validarConclusao(sim);
+        when(simuladoRepository.save(sim)).thenReturn(sim);
+        when(tentativaQuestaoFinder.contarPorSimulado(simId)).thenReturn(5L);
+        when(tentativaQuestaoFinder.contarAcertosPorSimulado(simId)).thenReturn(4L);
+
+        simuladoService.concluir(simId, userId);
+
+        verify(proficienciaTopicoSupport).atualizarProficienciaTopicosDoSimulado(simId);
+    }
+
+    @Test
+    @DisplayName("Deve excluir simulado com sucesso")
+    void deveExcluirSimuladoComSucesso() {
+        UUID userId = UUID.randomUUID();
+        UUID simId = UUID.randomUUID();
+        Usuario usuario = Usuario.builder().id(userId).ativo(true).build();
+        Simulado sim = Simulado.builder().id(simId).usuario(usuario).build();
+
+        when(userFinder.findById(userId)).thenReturn(usuario);
+        doNothing().when(usuarioValidator).validarUsuarioAtivo(usuario);
+        when(simuladoFinder.findById(simId)).thenReturn(sim);
+        doNothing().when(simuladoValidator).validarPropriedade(usuario, sim);
+
+        simuladoService.excluir(simId, userId);
+
+        verify(simuladoRepository).delete(sim);
     }
 }

@@ -284,7 +284,7 @@ class SimuladoAdaptativoServiceTest {
         SimuladoAdaptativoResponse response = simuladoAdaptativoService.gerarSimuladoAdaptativo(usuario.getId(), request);
 
         assertThat(response).isNotNull();
-        assertThat(response.titulo()).isEqualTo("Simulado Adaptativo IA - " + plano.getTitulo());
+        assertThat(response.titulo()).isEqualTo("Simulado: " + materia.getNome() + " - " + topico1.getTitulo());
         assertThat(response.questoes()).hasSize(3);
 
         verify(materiaRepository).findByPlanoEstudoOrderByOrdemAsc(plano);

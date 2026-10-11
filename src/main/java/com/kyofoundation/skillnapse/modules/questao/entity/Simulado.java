@@ -68,6 +68,6 @@ public class Simulado {
     private Instant criadoEm;
 
     @Builder.Default
-    @OneToMany(mappedBy = "simulado", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "simulado", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TentativaQuestao> tentativas = new ArrayList<>();
 }

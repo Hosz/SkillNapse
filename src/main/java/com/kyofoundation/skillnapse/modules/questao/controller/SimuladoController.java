@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -105,5 +106,23 @@ public class SimuladoController {
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
         return ResponseEntity.ok(simuladoService.concluir(id, userId));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Excluir simulado", description = "Remove um simulado do histórico do usuário autenticado.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Simulado excluído com sucesso"),
+            @ApiResponse(responseCode = "403", description = "Simulado pertence a outro usuário",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Simulado não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<Void> excluir(
+            @PathVariable UUID id,
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        simuladoService.excluir(id, userId);
+        return ResponseEntity.noContent().build();
     }
 }
