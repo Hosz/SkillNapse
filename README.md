@@ -1,7 +1,7 @@
 # 🧠 SkillNapse API
 
 > **Plataforma de Alta Performance para Gestão, Orquestração e Execução de Rotinas de Estudos com Inteligência Artificial**  
-> Um projeto do ecossistema **KyoFoundation** | Criado por **Murilo Henrique (Hokyozu)**
+> Criado por **Murilo Henrique (Hokyozu)**
 
 [![Java](https://img.shields.io/badge/Java-21%20LTS-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -17,7 +17,7 @@
 
 1. [Visão Geral](#-visão-geral)
 2. [Principais Recursos](#-principais-recursos)
-3. [Arquitetura de Software (Padrão Kyofuse)](#-arquitetura-de-software-padrão-kyofuse)
+3. [Arquitetura de Software e Modularização](#-arquitetura-de-software-e-modularização)
 4. [Módulos de Domínio](#-módulos-de-domínio)
 5. [Orquestração Resiliente de Inteligência Artificial](#-orquestração-resiliente-de-inteligência-artificial)
 6. [Stack Tecnológica](#-stack-tecnológica)
@@ -53,12 +53,12 @@ Integrando inteligência artificial como motor de diagnóstico e personalizaçã
 
 ---
 
-## 🏛 Arquitetura de Software (Padrão Kyofuse)
+## 🏛 Arquitetura de Software e Modularização
 
-A aplicação segue rigorosamente o padrão **Kyofuse** (KyoFoundation), adotando alta coesão e baixo acoplamento através de uma organização modular por domínios de negócio:
+A aplicação adota uma arquitetura modular orientada a domínios de negócio (Clean Architecture e princípios de DDD), garantindo alta coesão, baixo acoplamento e separação estrita de responsabilidades:
 
 ```
-com.kyofoundation.skillnapse.modules.<dominio>/
+src/main/java/.../modules/<dominio>/
 │
 ├── controller/         # Thin Controllers: validações @Valid, delega para Service e retorna ResponseEntity
 ├── service/            # Orquestração pura: sem mappers inline, sem queries repetidas, sem if(...) throw
@@ -292,6 +292,6 @@ O repositório adota regras estritas de qualidade de código estabelecidas no do
 
 ## 👨‍💻 Licença e Autoria
 
-Desenvolvido com excelência por **Murilo Henrique Marques Bento Santos (Hokyozu)** como parte das iniciativas de engenharia de software da **KyoFoundation**.
+Desenvolvido com excelência por **Murilo Henrique Marques Bento Santos (Hokyozu)**.
 
 Distribuído sob a licença open-source **MIT**. Consulte o arquivo de licença para mais informações.
