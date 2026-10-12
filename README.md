@@ -277,7 +277,7 @@ GET /desempenho/lacunas-prioritarias # Alertas de lacunas em tópicos já estuda
 
 ## 📐 Padrões de Código e Diretrizes
 
-O repositório adota regras estritas de qualidade de código estabelecidas no documento [`GEMINI.md`](./GEMINI.md):
+O projeto adota convenções e padrões estritos para garantir manutenibilidade, consistência e clareza no desenvolvimento:
 
 - **Sem métodos privados de regra de negócio em services**: cálculos ou lógica auxiliar devem residir em classes `*Support`.
 - **Sem `if(...) throw` em services**: todas as regras de validação são delegadas para `@Component *Validator`.
