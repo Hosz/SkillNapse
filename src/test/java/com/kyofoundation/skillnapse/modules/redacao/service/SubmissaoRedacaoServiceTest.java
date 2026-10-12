@@ -206,8 +206,8 @@ class SubmissaoRedacaoServiceTest {
     }
 
     @Test
-    @DisplayName("Deve rejeitar submissão por imagem quando legibilidade for inferior a 85%")
-    void deveRejeitarSubmissaoImagemQuandoLegibilidadeForMenorQue85() {
+    @DisplayName("Deve rejeitar submissão por imagem quando legibilidade for inferior a 95%")
+    void deveRejeitarSubmissaoImagemQuandoLegibilidadeForMenorQue95() {
         org.springframework.mock.web.MockMultipartFile imagem = new org.springframework.mock.web.MockMultipartFile(
                 "imagem", "folha.jpg", "image/jpeg", new byte[]{1, 2, 3}
         );
@@ -241,8 +241,8 @@ class SubmissaoRedacaoServiceTest {
     }
 
     @Test
-    @DisplayName("Deve submeter redação por imagem com sucesso quando legibilidade for maior ou igual a 85%")
-    void deveSubmeterRedacaoImagemComSucessoQuandoLegibilidadeForMaiorOuIgualA85() {
+    @DisplayName("Deve submeter redação por imagem com sucesso quando legibilidade for maior ou igual a 95%")
+    void deveSubmeterRedacaoImagemComSucessoQuandoLegibilidadeForMaiorOuIgualA95() {
         org.springframework.mock.web.MockMultipartFile imagem = new org.springframework.mock.web.MockMultipartFile(
                 "imagem", "folha.jpg", "image/jpeg", new byte[]{1, 2, 3}
         );
@@ -262,7 +262,7 @@ class SubmissaoRedacaoServiceTest {
 
         com.kyofoundation.skillnapse.modules.redacao.dto.payload.AvaliacaoLegibilidadeIaPayload resultadoIa =
                 new com.kyofoundation.skillnapse.modules.redacao.dto.payload.AvaliacaoLegibilidadeIaPayload(
-                        true, 92.5, null, "Texto manuscrito transcrito integralmente com 30 linhas...", feedback
+                        true, 96.5, null, "Texto manuscrito transcrito integralmente com 30 linhas...", feedback
                 );
 
         when(aiOrchestratorService.generateStructuredMultimodal(
@@ -281,12 +281,33 @@ class SubmissaoRedacaoServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.legivel()).isTrue();
-        assertThat(response.percentualLegibilidade()).isEqualTo(92.5);
+        assertThat(response.percentualLegibilidade()).isEqualTo(96.5);
         assertThat(response.textoTranscrito()).isEqualTo("Texto manuscrito transcrito integralmente com 30 linhas...");
         assertThat(response.submissao()).isNotNull();
         assertThat(response.submissao().notaGeral()).isEqualTo(new BigDecimal("920.00"));
 
         verify(redacaoImagemUploadValidator).validarImagem(imagem);
         verify(submissaoRedacaoRepository).save(any(SubmissaoRedacao.class));
+    }
+
+    @Test
+    @DisplayName("Deve apagar submissão de redação com sucesso")
+    void deveApagarSubmissaoComSucesso() {
+        UUID submissaoId = UUID.randomUUID();
+        SubmissaoRedacao submissao = SubmissaoRedacao.builder()
+                .id(submissaoId)
+                .usuario(usuario)
+                .temaRedacao(tema)
+                .textoAluno("Texto dissertativo do estudante para teste de exclusão...")
+                .build();
+
+        when(userFinder.findById(usuario.getId())).thenReturn(usuario);
+        when(submissaoRedacaoFinder.findById(submissaoId)).thenReturn(submissao);
+
+        submissaoRedacaoService.apagarSubmissao(usuario.getId(), submissaoId);
+
+        verify(usuarioValidator).validarUsuarioAtivo(usuario);
+        verify(submissaoRedacaoValidator).validarPropriedadeSubmissao(usuario, submissao);
+        verify(submissaoRedacaoRepository).delete(submissao);
     }
 }

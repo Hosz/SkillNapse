@@ -153,4 +153,38 @@ class TemaRedacaoValidatorTest {
         );
         assertThatCode(() -> validator.validarTemaGeradoIa(valido)).doesNotThrowAnyException();
     }
+
+    @Test
+    @DisplayName("validarCriacaoManual deve lançar BadRequestException para dados manuais inválidos")
+    void deveLancarSeCriacaoManualInvalida() {
+        assertThatThrownBy(() -> validator.validarCriacaoManual(null))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Os dados para criação do tema");
+
+        com.kyofoundation.skillnapse.modules.redacao.dto.request.CriarTemaRedacaoRequest tituloCurto =
+                new com.kyofoundation.skillnapse.modules.redacao.dto.request.CriarTemaRedacaoRequest(
+                        null, "AB", null, "Textos motivadores com mais de vinte caracteres.", null
+                );
+        assertThatThrownBy(() -> validator.validarCriacaoManual(tituloCurto))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("título da redação deve ter entre 5 e 200 caracteres");
+
+        com.kyofoundation.skillnapse.modules.redacao.dto.request.CriarTemaRedacaoRequest motivadorCurto =
+                new com.kyofoundation.skillnapse.modules.redacao.dto.request.CriarTemaRedacaoRequest(
+                        null, "Título Válido Manual", null, "Muito curto", null
+                );
+        assertThatThrownBy(() -> validator.validarCriacaoManual(motivadorCurto))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("textos motivadores devem conter ao menos 20 caracteres");
+    }
+
+    @Test
+    @DisplayName("validarCriacaoManual deve passar com dados válidos")
+    void devePassarCriacaoManualValida() {
+        com.kyofoundation.skillnapse.modules.redacao.dto.request.CriarTemaRedacaoRequest valido =
+                new com.kyofoundation.skillnapse.modules.redacao.dto.request.CriarTemaRedacaoRequest(
+                        null, "Título Válido Manual", "Descrição da proposta", "Textos motivadores com mais de vinte caracteres suficientes.", "Critérios"
+                );
+        assertThatCode(() -> validator.validarCriacaoManual(valido)).doesNotThrowAnyException();
+    }
 }

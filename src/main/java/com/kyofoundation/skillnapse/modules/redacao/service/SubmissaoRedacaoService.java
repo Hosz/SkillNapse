@@ -63,7 +63,12 @@ public class SubmissaoRedacaoService {
         submissaoRedacaoValidator.validarPropriedadeTema(usuario, tema);
 
         String prompt = promptCorrecaoRedacaoSupport.construirPromptCorrecao(tema, request.textoAluno());
-        PromptRequest promptRequest = new PromptRequest(prompt);
+        PromptRequest promptRequest = new PromptRequest(
+                prompt,
+                "Você é o Auditor-Chefe e Examinador de Banca de Elite para Redações nos padrões ENEM, CEBRASPE, FGV e FCC.",
+                0.1,
+                4000
+        );
         FeedbackCorrecaoIaPayload feedback = aiOrchestratorService.generateStructured(promptRequest, FeedbackCorrecaoIaPayload.class);
         submissaoRedacaoValidator.validarFeedbackIa(feedback);
 
@@ -163,5 +168,16 @@ public class SubmissaoRedacaoService {
                 resultadoIa.textoTranscrito(),
                 SubmissaoRedacaoMapper.toResponse(salva, feedback)
         );
+    }
+
+    @Transactional
+    public void apagarSubmissao(UUID userId, UUID submissaoId) {
+        Usuario usuario = userFinder.findById(userId);
+        usuarioValidator.validarUsuarioAtivo(usuario);
+
+        SubmissaoRedacao submissao = submissaoRedacaoFinder.findById(submissaoId);
+        submissaoRedacaoValidator.validarPropriedadeSubmissao(usuario, submissao);
+
+        submissaoRedacaoRepository.delete(submissao);
     }
 }

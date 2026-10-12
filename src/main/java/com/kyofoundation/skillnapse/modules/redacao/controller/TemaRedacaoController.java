@@ -1,6 +1,8 @@
 package com.kyofoundation.skillnapse.modules.redacao.controller;
 
 import com.kyofoundation.skillnapse.common.exception.ErrorResponse;
+import com.kyofoundation.skillnapse.modules.redacao.dto.request.AtualizarTemaRedacaoRequest;
+import com.kyofoundation.skillnapse.modules.redacao.dto.request.CriarTemaRedacaoRequest;
 import com.kyofoundation.skillnapse.modules.redacao.dto.request.GerarTemaRedacaoRequest;
 import com.kyofoundation.skillnapse.modules.redacao.dto.response.TemaRedacaoResponse;
 import com.kyofoundation.skillnapse.modules.redacao.dto.response.TemaRedacaoResumoResponse;
@@ -22,9 +24,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -95,5 +99,64 @@ public class TemaRedacaoController {
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
         return ResponseEntity.ok(temaRedacaoService.obterPorId(userId, id));
+    }
+
+    @PostMapping
+    @Operation(summary = "Criar proposta de redação manualmente", description = "Cadastra uma proposta de redação personalizada com textos motivadores fornecidos pelo estudante.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Tema de redação criado com sucesso",
+                    content = @Content(schema = @Schema(implementation = TemaRedacaoResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Dados da proposta de redação inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Acesso negado ao plano de estudo informado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Plano de estudo não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<TemaRedacaoResponse> criar(
+            @Valid @RequestBody CriarTemaRedacaoRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ResponseEntity.status(HttpStatus.CREATED).body(temaRedacaoService.criarTemaManual(userId, request));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Atualizar proposta de redação", description = "Atualiza o título, descrição, textos motivadores e critérios de uma proposta de redação existente.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Tema de redação atualizado com sucesso",
+                    content = @Content(schema = @Schema(implementation = TemaRedacaoResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Dados da proposta inválidos",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Acesso negado ao tema de redação",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Tema de redação não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<TemaRedacaoResponse> atualizar(
+            @PathVariable UUID id,
+            @Valid @RequestBody AtualizarTemaRedacaoRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ResponseEntity.ok(temaRedacaoService.atualizarTema(userId, id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Excluir proposta de redação", description = "Exclui uma proposta de redação e suas submissões associadas.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Tema de redação excluído com sucesso"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado ao tema de redação",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Tema de redação não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<Void> apagar(
+            @PathVariable UUID id,
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        temaRedacaoService.apagarTema(userId, id);
+        return ResponseEntity.noContent().build();
     }
 }
