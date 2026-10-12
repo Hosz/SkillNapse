@@ -13,6 +13,7 @@ import com.kyofoundation.skillnapse.modules.planoestudo.finder.MateriaFinder;
 import com.kyofoundation.skillnapse.modules.planoestudo.finder.PlanoEstudoFinder;
 import com.kyofoundation.skillnapse.modules.planoestudo.finder.TopicoFinder;
 import com.kyofoundation.skillnapse.modules.redacao.dto.payload.TemaRedacaoIaPayload;
+import com.kyofoundation.skillnapse.modules.redacao.dto.request.CriarTemaRedacaoRequest;
 import com.kyofoundation.skillnapse.modules.redacao.dto.request.GerarTemaRedacaoRequest;
 import com.kyofoundation.skillnapse.modules.redacao.dto.response.TemaRedacaoResponse;
 import com.kyofoundation.skillnapse.modules.redacao.dto.response.TemaRedacaoResumoResponse;
@@ -222,5 +223,57 @@ class TemaRedacaoServiceTest {
 
         verify(usuarioValidator).validarUsuarioAtivo(usuario);
         verify(desempenhoValidator).validarPropriedadePlano(usuario, plano);
+    }
+
+    @Test
+    @DisplayName("Deve criar tema de redação manual com sucesso")
+    void deveCriarTemaManualComSucesso() {
+        CriarTemaRedacaoRequest request = new CriarTemaRedacaoRequest(
+                plano.getId(),
+                "Tema Criado Manualmente",
+                "Descrição manual da proposta",
+                "Textos motivadores fornecidos pelo estudante para o simulado.",
+                "Critérios formais de correção."
+        );
+
+        when(userFinder.findById(usuario.getId())).thenReturn(usuario);
+        when(planoEstudoFinder.findById(plano.getId())).thenReturn(plano);
+        when(temaRedacaoRepository.save(any(TemaRedacao.class))).thenAnswer(invocation -> {
+            TemaRedacao t = invocation.getArgument(0);
+            t.setId(UUID.randomUUID());
+            return t;
+        });
+
+        TemaRedacaoResponse response = temaRedacaoService.criarTemaManual(usuario.getId(), request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.titulo()).isEqualTo("Tema Criado Manualmente");
+        assertThat(response.geradoPorIa()).isFalse();
+
+        verify(temaRedacaoValidator).validarCriacaoManual(request);
+        verify(usuarioValidator).validarUsuarioAtivo(usuario);
+        verify(desempenhoValidator).validarPropriedadePlano(usuario, plano);
+        verify(temaRedacaoRepository).save(any(TemaRedacao.class));
+    }
+
+    @Test
+    @DisplayName("Deve apagar tema de redação com sucesso")
+    void deveApagarTemaComSucesso() {
+        UUID temaId = UUID.randomUUID();
+        TemaRedacao tema = TemaRedacao.builder()
+                .id(temaId)
+                .planoEstudo(plano)
+                .titulo("Tema Para Excluir")
+                .textosMotivadores("Motivadores")
+                .build();
+
+        when(userFinder.findById(usuario.getId())).thenReturn(usuario);
+        when(temaRedacaoFinder.findById(temaId)).thenReturn(tema);
+
+        temaRedacaoService.apagarTema(usuario.getId(), temaId);
+
+        verify(usuarioValidator).validarUsuarioAtivo(usuario);
+        verify(desempenhoValidator).validarPropriedadePlano(usuario, plano);
+        verify(temaRedacaoRepository).delete(tema);
     }
 }

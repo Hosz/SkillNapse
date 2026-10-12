@@ -25,9 +25,6 @@ public class PlanoEstudoValidator {
         if (request.titulo().trim().length() > MAX_TITULO_LENGTH) {
             throw new BadRequestException("O título não pode ter mais de " + MAX_TITULO_LENGTH + " caracteres.");
         }
-        if (request.descricao() != null && request.descricao().isBlank()) {
-            throw new BadRequestException("A descrição não pode estar vazia.");
-        }
     }
 
     public void validarEdicao(EdicaoPlanoEstudoRequest request) {

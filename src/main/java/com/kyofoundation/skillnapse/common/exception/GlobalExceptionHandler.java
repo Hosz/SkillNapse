@@ -83,6 +83,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
+        if (isClientAbort(ex)) {
+            log.info("Requisição interrompida pelo cliente (conexão cancelada / ClientAbortException).");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
         String msg = extrairMensagemProfunda(ex);
 
         if (isQuotaExhaustedError(msg)) {
@@ -128,5 +133,20 @@ public class GlobalExceptionHandler {
                 || m.contains("exhausted")
                 || m.contains("too many requests")
                 || m.contains("exceeded your current quota");
+    }
+
+    private boolean isClientAbort(Throwable ex) {
+        Throwable current = ex;
+        while (current != null) {
+            String className = current.getClass().getName();
+            String msg = current.getMessage() != null ? current.getMessage().toLowerCase() : "";
+            if (className.contains("ClientAbortException")
+                    || msg.contains("broken pipe")
+                    || msg.contains("connection reset by peer")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }

@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -66,9 +67,9 @@ public class SubmissaoRedacaoController {
     }
 
     @PostMapping(value = "/imagem", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Submeter imagem de redação manuscrita", description = "Envia foto da folha de redação. A IA avalia legibilidade (mínimo 85%), transcreve e realiza a correção analítica completa (escala 0 a 1000).")
+    @Operation(summary = "Submeter imagem de redação manuscrita", description = "Envia foto da folha de redação. A IA avalia legibilidade (mínimo 95%), transcreve e realiza a correção analítica completa (escala 0 a 1000).")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Análise da imagem processada com sucesso (contendo transcrição e nota se legível >= 85%, ou recomendação de transcrição manual se ilegível)",
+            @ApiResponse(responseCode = "200", description = "Análise da imagem processada com sucesso (contendo transcrição e nota se legível >= 95%, ou recomendação de transcrição manual se ilegível)",
                     content = @Content(schema = @Schema(implementation = ResultadoSubmissaoImagemResponse.class))),
             @ApiResponse(responseCode = "400", description = "Imagem inválida, corrompida ou fora do limite de tamanho",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -120,5 +121,23 @@ public class SubmissaoRedacaoController {
     ) {
         UUID userId = UUID.fromString(jwt.getSubject());
         return ResponseEntity.ok(submissaoRedacaoService.obterPorId(userId, id));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Excluir submissão de redação", description = "Remove uma redação avaliada do histórico do estudante.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Submissão de redação excluída com sucesso"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado à submissão de redação",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Submissão de redação não encontrada",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<Void> apagar(
+            @PathVariable UUID id,
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        submissaoRedacaoService.apagarSubmissao(userId, id);
+        return ResponseEntity.noContent().build();
     }
 }

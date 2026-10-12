@@ -32,6 +32,16 @@ class PlanoEstudoValidatorTest {
     }
 
     @Test
+    @DisplayName("Deve validar criacao de plano com descricao nula ou vazia sem erro")
+    void deveValidarCriacaoComDescricaoOpcional() {
+        PlanoEstudoRequest requestSemDescricao = new PlanoEstudoRequest("Concurso Magistratura", null);
+        PlanoEstudoRequest requestDescricaoVazia = new PlanoEstudoRequest("Concurso Magistratura", "");
+
+        assertThatCode(() -> validator.validarCriacao(requestSemDescricao)).doesNotThrowAnyException();
+        assertThatCode(() -> validator.validarCriacao(requestDescricaoVazia)).doesNotThrowAnyException();
+    }
+
+    @Test
     @DisplayName("Deve lancar BadRequestException quando titulo for nulo ou vazio")
     void deveLancarExcecaoQuandoTituloVazio() {
         PlanoEstudoRequest requestNulo = new PlanoEstudoRequest(null, "Descricao");

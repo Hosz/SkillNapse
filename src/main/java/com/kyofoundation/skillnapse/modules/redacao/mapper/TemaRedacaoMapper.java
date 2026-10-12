@@ -2,6 +2,8 @@ package com.kyofoundation.skillnapse.modules.redacao.mapper;
 
 import com.kyofoundation.skillnapse.modules.planoestudo.entity.PlanoEstudo;
 import com.kyofoundation.skillnapse.modules.redacao.dto.payload.TemaRedacaoIaPayload;
+import com.kyofoundation.skillnapse.modules.redacao.dto.request.AtualizarTemaRedacaoRequest;
+import com.kyofoundation.skillnapse.modules.redacao.dto.request.CriarTemaRedacaoRequest;
 import com.kyofoundation.skillnapse.modules.redacao.dto.response.TemaRedacaoResponse;
 import com.kyofoundation.skillnapse.modules.redacao.dto.response.TemaRedacaoResumoResponse;
 import com.kyofoundation.skillnapse.modules.redacao.entity.TemaRedacao;
@@ -27,6 +29,31 @@ public class TemaRedacaoMapper {
                 .criteriosAvaliacao(payload.criteriosAvaliacao() != null ? payload.criteriosAvaliacao().trim() : null)
                 .geradoPorIa(true)
                 .build();
+    }
+
+    public static TemaRedacao toEntity(CriarTemaRedacaoRequest request, PlanoEstudo plano) {
+        String descricao = (request.descricao() != null && !request.descricao().isBlank())
+                ? request.descricao().trim()
+                : null;
+        String criterios = (request.criteriosAvaliacao() != null && !request.criteriosAvaliacao().isBlank())
+                ? request.criteriosAvaliacao().trim()
+                : null;
+
+        return TemaRedacao.builder()
+                .planoEstudo(plano)
+                .titulo(request.titulo().trim())
+                .descricao(descricao)
+                .textosMotivadores(request.textosMotivadores().trim())
+                .criteriosAvaliacao(criterios)
+                .geradoPorIa(false)
+                .build();
+    }
+
+    public static void atualizarEntity(TemaRedacao tema, AtualizarTemaRedacaoRequest request) {
+        tema.setTitulo(request.titulo().trim());
+        tema.setDescricao(request.descricao() != null && !request.descricao().isBlank() ? request.descricao().trim() : null);
+        tema.setTextosMotivadores(request.textosMotivadores().trim());
+        tema.setCriteriosAvaliacao(request.criteriosAvaliacao() != null && !request.criteriosAvaliacao().isBlank() ? request.criteriosAvaliacao().trim() : null);
     }
 
     public static String lapidarTitulo(String tituloBruto) {

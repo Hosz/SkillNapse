@@ -6,6 +6,7 @@ import com.kyofoundation.skillnapse.common.config.SecurityConfig;
 import com.kyofoundation.skillnapse.common.exception.ForbiddenException;
 import com.kyofoundation.skillnapse.common.exception.GlobalExceptionHandler;
 import com.kyofoundation.skillnapse.common.exception.ResourceNotFoundException;
+import com.kyofoundation.skillnapse.modules.redacao.dto.request.CriarTemaRedacaoRequest;
 import com.kyofoundation.skillnapse.modules.redacao.dto.request.GerarTemaRedacaoRequest;
 import com.kyofoundation.skillnapse.modules.redacao.dto.response.TemaRedacaoResponse;
 import com.kyofoundation.skillnapse.modules.redacao.dto.response.TemaRedacaoResumoResponse;
@@ -30,6 +31,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -209,5 +211,53 @@ class TemaRedacaoControllerTest {
                         .with(jwt().jwt(builder -> builder.subject(userId.toString()))))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Tema de redação não encontrado com o id: " + temaId));
+    }
+
+    @Test
+    @DisplayName("Deve criar tema de redação manual com status 201 Created")
+    void deveCriarTemaManualComSucesso() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID temaId = UUID.randomUUID();
+        CriarTemaRedacaoRequest request = new CriarTemaRedacaoRequest(
+                null,
+                "Tema Manual de Redação",
+                "Descrição do tema",
+                "Textos motivadores com fundamentação adequada para o aluno.",
+                "Critérios"
+        );
+
+        TemaRedacaoResponse response = new TemaRedacaoResponse(
+                temaId,
+                null,
+                "Tema Manual de Redação",
+                "Descrição do tema",
+                "Textos motivadores com fundamentação adequada para o aluno.",
+                "Critérios",
+                false,
+                Instant.now(),
+                0L
+        );
+
+        when(temaRedacaoService.criarTemaManual(eq(userId), any(CriarTemaRedacaoRequest.class))).thenReturn(response);
+
+        mockMvc.perform(post("/api/v1/redacoes/temas")
+                        .with(jwt().jwt(builder -> builder.subject(userId.toString())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(temaId.toString()))
+                .andExpect(jsonPath("$.titulo").value("Tema Manual de Redação"))
+                .andExpect(jsonPath("$.geradoPorIa").value(false));
+    }
+
+    @Test
+    @DisplayName("Deve excluir tema de redação com status 204 No Content")
+    void deveExcluirTemaComSucesso() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID temaId = UUID.randomUUID();
+
+        mockMvc.perform(delete("/api/v1/redacoes/temas/{id}", temaId)
+                        .with(jwt().jwt(builder -> builder.subject(userId.toString()))))
+                .andExpect(status().isNoContent());
     }
 }

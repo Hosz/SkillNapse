@@ -91,12 +91,23 @@ public class AiOrchestratorService {
         );
     }
 
+    private static final tools.jackson.databind.json.JsonMapper AI_JSON_MAPPER = tools.jackson.databind.json.JsonMapper.builder()
+            .disable(tools.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .enable(tools.jackson.databind.DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+            .enable(tools.jackson.databind.DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT)
+            .enable(tools.jackson.core.json.JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
+            .enable(tools.jackson.core.json.JsonReadFeature.ALLOW_SINGLE_QUOTES)
+            .enable(tools.jackson.core.json.JsonReadFeature.ALLOW_TRAILING_COMMA)
+            .enable(tools.jackson.core.json.JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
+            .enable(tools.jackson.core.json.JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES)
+            .build();
+
     public <T> T generateStructured(PromptRequest request, Class<T> responseType) {
         aiPromptValidator.validateStructuredRequest(request, responseType);
 
         BeanOutputConverter<T> converter = new BeanOutputConverter<>(
                 responseType,
-                null,
+                AI_JSON_MAPPER,
                 AiOrchestratorService::cleanJsonText
         );
 
@@ -123,7 +134,7 @@ public class AiOrchestratorService {
 
         BeanOutputConverter<T> converter = new BeanOutputConverter<>(
                 responseType,
-                null,
+                AI_JSON_MAPPER,
                 AiOrchestratorService::cleanJsonText
         );
 
@@ -307,7 +318,10 @@ public class AiOrchestratorService {
             text = text.substring(start).trim();
         }
 
-        // 4. Auto-reparo de JSON truncado por limite de tokens ou corte abrupto
+        // 4. Auto-reparo de vírgulas faltantes entre propriedades adjacentes
+        text = text.replaceAll("(?<=[0-9\"truefalsenull\\]\\}])\\s*\\n\\s*(?=\"[a-zA-Z0-9_]+\"\\s*:)", ",\n");
+
+        // 5. Auto-reparo de JSON truncado por limite de tokens ou corte abrupto
         return repairTruncatedJson(text);
     }
 

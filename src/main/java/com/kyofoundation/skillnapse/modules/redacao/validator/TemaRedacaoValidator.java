@@ -6,6 +6,8 @@ import com.kyofoundation.skillnapse.modules.planoestudo.entity.Materia;
 import com.kyofoundation.skillnapse.modules.planoestudo.entity.PlanoEstudo;
 import com.kyofoundation.skillnapse.modules.planoestudo.entity.Topico;
 import com.kyofoundation.skillnapse.modules.redacao.dto.payload.TemaRedacaoIaPayload;
+import com.kyofoundation.skillnapse.modules.redacao.dto.request.AtualizarTemaRedacaoRequest;
+import com.kyofoundation.skillnapse.modules.redacao.dto.request.CriarTemaRedacaoRequest;
 import com.kyofoundation.skillnapse.modules.redacao.dto.request.GerarTemaRedacaoRequest;
 import org.springframework.stereotype.Component;
 
@@ -75,6 +77,44 @@ public class TemaRedacaoValidator {
         }
         if (payload.criteriosAvaliacao() == null || payload.criteriosAvaliacao().trim().length() < TAMANHO_MIN_CRITERIOS) {
             throw new BadRequestException("Os critérios de avaliação da proposta devem conter ao menos " + TAMANHO_MIN_CRITERIOS + " caracteres de instruções.");
+        }
+    }
+
+    public void validarCriacaoManual(CriarTemaRedacaoRequest request) {
+        if (request == null) {
+            throw new BadRequestException("Os dados para criação do tema de redação não podem ser nulos.");
+        }
+        if (request.titulo() == null || request.titulo().isBlank()) {
+            throw new BadRequestException("O título da proposta de redação é obrigatório.");
+        }
+        String tituloTrim = request.titulo().trim();
+        if (tituloTrim.length() < 5 || tituloTrim.length() > TAMANHO_MAX_TITULO) {
+            throw new BadRequestException("O título da redação deve ter entre 5 e " + TAMANHO_MAX_TITULO + " caracteres.");
+        }
+        if (request.textosMotivadores() == null || request.textosMotivadores().isBlank()) {
+            throw new BadRequestException("Os textos motivadores são obrigatórios.");
+        }
+        if (request.textosMotivadores().trim().length() < 20) {
+            throw new BadRequestException("Os textos motivadores devem conter ao menos 20 caracteres de fundamentação.");
+        }
+    }
+
+    public void validarAtualizacao(AtualizarTemaRedacaoRequest request) {
+        if (request == null) {
+            throw new BadRequestException("Os dados para atualização do tema de redação não podem ser nulos.");
+        }
+        if (request.titulo() == null || request.titulo().isBlank()) {
+            throw new BadRequestException("O título da proposta de redação é obrigatório.");
+        }
+        String tituloTrim = request.titulo().trim();
+        if (tituloTrim.length() < 5 || tituloTrim.length() > TAMANHO_MAX_TITULO) {
+            throw new BadRequestException("O título da redação deve ter entre 5 e " + TAMANHO_MAX_TITULO + " caracteres.");
+        }
+        if (request.textosMotivadores() == null || request.textosMotivadores().isBlank()) {
+            throw new BadRequestException("Os textos motivadores são obrigatórios.");
+        }
+        if (request.textosMotivadores().trim().length() < 20) {
+            throw new BadRequestException("Os textos motivadores devem conter ao menos 20 caracteres de fundamentação.");
         }
     }
 }

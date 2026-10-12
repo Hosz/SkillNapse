@@ -13,6 +13,8 @@ import com.kyofoundation.skillnapse.modules.planoestudo.finder.MateriaFinder;
 import com.kyofoundation.skillnapse.modules.planoestudo.finder.PlanoEstudoFinder;
 import com.kyofoundation.skillnapse.modules.planoestudo.finder.TopicoFinder;
 import com.kyofoundation.skillnapse.modules.redacao.dto.payload.TemaRedacaoIaPayload;
+import com.kyofoundation.skillnapse.modules.redacao.dto.request.AtualizarTemaRedacaoRequest;
+import com.kyofoundation.skillnapse.modules.redacao.dto.request.CriarTemaRedacaoRequest;
 import com.kyofoundation.skillnapse.modules.redacao.dto.request.GerarTemaRedacaoRequest;
 import com.kyofoundation.skillnapse.modules.redacao.dto.response.TemaRedacaoResponse;
 import com.kyofoundation.skillnapse.modules.redacao.dto.response.TemaRedacaoResumoResponse;
@@ -125,5 +127,56 @@ public class TemaRedacaoService {
 
         long totalSubmissoes = temaRedacaoRepository.countSubmissoesByTemaId(tema.getId());
         return TemaRedacaoMapper.toResponse(tema, totalSubmissoes);
+    }
+
+    @Transactional
+    public TemaRedacaoResponse criarTemaManual(UUID userId, CriarTemaRedacaoRequest request) {
+        temaRedacaoValidator.validarCriacaoManual(request);
+
+        Usuario usuario = userFinder.findById(userId);
+        usuarioValidator.validarUsuarioAtivo(usuario);
+
+        PlanoEstudo plano = null;
+        if (request.planoEstudoId() != null) {
+            plano = planoEstudoFinder.findById(request.planoEstudoId());
+            desempenhoValidator.validarPropriedadePlano(usuario, plano);
+        }
+
+        TemaRedacao entity = TemaRedacaoMapper.toEntity(request, plano);
+        TemaRedacao temaSalvo = temaRedacaoRepository.save(entity);
+
+        return TemaRedacaoMapper.toResponse(temaSalvo, 0L);
+    }
+
+    @Transactional
+    public TemaRedacaoResponse atualizarTema(UUID userId, UUID temaId, AtualizarTemaRedacaoRequest request) {
+        temaRedacaoValidator.validarAtualizacao(request);
+
+        Usuario usuario = userFinder.findById(userId);
+        usuarioValidator.validarUsuarioAtivo(usuario);
+
+        TemaRedacao tema = temaRedacaoFinder.findById(temaId);
+        if (tema.getPlanoEstudo() != null) {
+            desempenhoValidator.validarPropriedadePlano(usuario, tema.getPlanoEstudo());
+        }
+
+        TemaRedacaoMapper.atualizarEntity(tema, request);
+        TemaRedacao salvo = temaRedacaoRepository.save(tema);
+        long totalSubmissoes = temaRedacaoRepository.countSubmissoesByTemaId(salvo.getId());
+
+        return TemaRedacaoMapper.toResponse(salvo, totalSubmissoes);
+    }
+
+    @Transactional
+    public void apagarTema(UUID userId, UUID temaId) {
+        Usuario usuario = userFinder.findById(userId);
+        usuarioValidator.validarUsuarioAtivo(usuario);
+
+        TemaRedacao tema = temaRedacaoFinder.findById(temaId);
+        if (tema.getPlanoEstudo() != null) {
+            desempenhoValidator.validarPropriedadePlano(usuario, tema.getPlanoEstudo());
+        }
+
+        temaRedacaoRepository.delete(tema);
     }
 }

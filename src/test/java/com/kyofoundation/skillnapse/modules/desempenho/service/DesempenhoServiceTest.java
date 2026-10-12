@@ -156,19 +156,63 @@ class DesempenhoServiceTest {
         when(materiaRepository.findByPlanoEstudoOrderByOrdemAsc(plano)).thenReturn(List.of(materia));
         when(topicoRepository.findByMateriaIn(List.of(materia))).thenReturn(List.of(topico1, topico2));
 
-        when(tentativaQuestaoFinder.obterMetricasPorTopicos(any(), any())).thenReturn(List.of());
-        when(calculoDesempenhoSupport.calcularTaxaAcerto(0L, 0L)).thenReturn(0.0);
-        when(calculoDesempenhoSupport.determinarCriticidade(anyLong(), anyDouble(), anyInt(), any()))
+        MetricasTopicoProjection metrica1 = mock(MetricasTopicoProjection.class);
+        when(metrica1.getTopicoId()).thenReturn(topico1.getId());
+        when(metrica1.getTotalTentativas()).thenReturn(10L);
+        when(metrica1.getTotalAcertos()).thenReturn(3L);
+
+        MetricasTopicoProjection metrica2 = mock(MetricasTopicoProjection.class);
+        when(metrica2.getTopicoId()).thenReturn(topico2.getId());
+        when(metrica2.getTotalTentativas()).thenReturn(8L);
+        when(metrica2.getTotalAcertos()).thenReturn(4L);
+
+        when(tentativaQuestaoFinder.obterMetricasPorTopicos(any(), any())).thenReturn(List.of(metrica1, metrica2));
+        when(calculoDesempenhoSupport.calcularTaxaAcerto(10L, 3L)).thenReturn(30.0);
+        when(calculoDesempenhoSupport.calcularTaxaAcerto(8L, 4L)).thenReturn(50.0);
+        when(calculoDesempenhoSupport.determinarCriticidade(10L, 30.0, 5, NivelProficiencia.INICIANTE))
                 .thenReturn(NivelCriticidadeTopico.CRITICO);
-        when(calculoDesempenhoSupport.calcularIndiceSeveridade(0.0, 5, 0L)).thenReturn(500.0);
-        when(calculoDesempenhoSupport.calcularIndiceSeveridade(0.0, 3, 0L)).thenReturn(300.0);
+        when(calculoDesempenhoSupport.determinarCriticidade(8L, 50.0, 3, NivelProficiencia.INTERMEDIARIO))
+                .thenReturn(NivelCriticidadeTopico.CRITICO);
+        when(calculoDesempenhoSupport.calcularIndiceSeveridade(30.0, 5, 10L)).thenReturn(350.0);
+        when(calculoDesempenhoSupport.calcularIndiceSeveridade(50.0, 3, 8L)).thenReturn(150.0);
 
         List<TopicoCriticoResponse> resultado = desempenhoService.obterTopicosCriticos(userId, planoId, 5);
 
         assertThat(resultado).hasSize(2);
         assertThat(resultado.getFirst().tituloTopico()).isEqualTo("Crimes contra Pessoa");
-        assertThat(resultado.getFirst().indiceSeveridade()).isEqualTo(500.0);
+        assertThat(resultado.getFirst().indiceSeveridade()).isEqualTo(350.0);
         assertThat(resultado.get(1).tituloTopico()).isEqualTo("Crimes contra Patrimonio");
+    }
+
+    @Test
+    @DisplayName("Deve retornar lista vazia quando topicos nao possuem tentativas registradas")
+    void deveRetornarListaVaziaQuandoTopicosSemTentativas() {
+        UUID userId = UUID.randomUUID();
+        UUID planoId = UUID.randomUUID();
+        Usuario usuario = Usuario.builder().id(userId).ativo(true).build();
+        PlanoEstudo plano = PlanoEstudo.builder().id(planoId).titulo("Plano Policial").usuario(usuario).build();
+
+        Materia materia = Materia.builder().id(UUID.randomUUID()).nome("Penal").planoEstudo(plano).build();
+        Topico topico1 = Topico.builder().id(UUID.randomUUID()).titulo("Crimes contra Pessoa").materia(materia).pesoEdital(5).nivelProficiencia(NivelProficiencia.INICIANTE).build();
+
+        when(userFinder.findById(userId)).thenReturn(usuario);
+        doNothing().when(usuarioValidator).validarUsuarioAtivo(usuario);
+        doNothing().when(desempenhoValidator).validarLimiteTopicosCriticos(5);
+        when(planoEstudoFinder.findById(planoId)).thenReturn(plano);
+        doNothing().when(desempenhoValidator).validarPropriedadePlano(usuario, plano);
+
+        when(materiaRepository.findByPlanoEstudoOrderByOrdemAsc(plano)).thenReturn(List.of(materia));
+        when(topicoRepository.findByMateriaIn(List.of(materia))).thenReturn(List.of(topico1));
+
+        when(tentativaQuestaoFinder.obterMetricasPorTopicos(any(), any())).thenReturn(List.of());
+        when(calculoDesempenhoSupport.calcularTaxaAcerto(0L, 0L)).thenReturn(0.0);
+        when(calculoDesempenhoSupport.determinarCriticidade(0L, 0.0, 5, NivelProficiencia.INICIANTE))
+                .thenReturn(NivelCriticidadeTopico.SEM_DADOS);
+        when(calculoDesempenhoSupport.calcularIndiceSeveridade(0.0, 5, 0L)).thenReturn(0.0);
+
+        List<TopicoCriticoResponse> resultado = desempenhoService.obterTopicosCriticos(userId, planoId, 5);
+
+        assertThat(resultado).isEmpty();
     }
 
     @Test

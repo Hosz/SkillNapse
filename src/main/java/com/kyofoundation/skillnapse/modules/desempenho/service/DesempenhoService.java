@@ -174,9 +174,9 @@ public class DesempenhoService {
         }
 
         return candidatos.stream()
+                .filter(t -> t.totalTentativas() > 0 && t.taxaAcerto() < 60.0)
                 .sorted(Comparator
-                        .comparing((TopicoCriticoResponse t) -> t.criticidade() == NivelCriticidadeTopico.CRITICO ? 0 :
-                                (t.criticidade() == NivelCriticidadeTopico.ATENCAO ? 1 : 2))
+                        .comparing((TopicoCriticoResponse t) -> t.criticidade() == NivelCriticidadeTopico.CRITICO ? 0 : 1)
                         .thenComparing(Comparator.comparing(TopicoCriticoResponse::indiceSeveridade).reversed())
                         .thenComparing(Comparator.comparing(TopicoCriticoResponse::pesoEdital).reversed()))
                 .limit(limite)

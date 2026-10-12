@@ -34,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -235,5 +236,16 @@ class SubmissaoRedacaoControllerTest {
                 .andExpect(jsonPath("$.legivel").value(true))
                 .andExpect(jsonPath("$.percentualLegibilidade").value(91.0))
                 .andExpect(jsonPath("$.textoTranscrito").value("Texto transcrito da folha..."));
+    }
+
+    @Test
+    @DisplayName("Deve excluir submissão de redação com status 204 No Content")
+    void deveExcluirSubmissaoComSucesso() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID submissaoId = UUID.randomUUID();
+
+        mockMvc.perform(delete("/api/v1/redacoes/submissoes/{id}", submissaoId)
+                        .with(jwt().jwt(builder -> builder.subject(userId.toString()))))
+                .andExpect(status().isNoContent());
     }
 }
