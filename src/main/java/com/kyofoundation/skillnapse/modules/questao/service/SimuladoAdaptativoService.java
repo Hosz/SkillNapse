@@ -96,7 +96,12 @@ public class SimuladoAdaptativoService {
                     topico, qtdParaEsteTopico, request.bancaAlvo()
             );
 
-            PromptRequest promptRequest = new PromptRequest(promptTexto);
+            PromptRequest promptRequest = new PromptRequest(
+                    promptTexto,
+                    "Você é um examinador sênior especialista na elaboração de questões de concursos públicos com saída estritamente em JSON válido.",
+                    0.2,
+                    8192
+            );
             LoteQuestoesIaPayload lote = aiOrchestratorService.generateStructured(promptRequest, LoteQuestoesIaPayload.class);
 
             if (lote != null && lote.questoes() != null) {

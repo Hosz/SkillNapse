@@ -35,7 +35,28 @@ public class PromptQuestaoAdaptativaSupport {
                 5. O campo 'explicacaoGabarito' deve conter a fundamentação teórica detalhada explicando por que a alternativa correta é a válida e por que os distratores estão incorretos.
                 6. O campo 'dificuldade' deve ser um dos valores: 'FACIL', 'MEDIA' ou 'DIFICIL'.
                 
-                Retorne a resposta estritamente no formato JSON compatível com o schema do lote de questões.
+                DIRETRIZES DE FORMATAÇÃO E SINTAXE JSON OBRIGATÓRIAS:
+                - Retorne EXCLUSIVAMENTE um objeto JSON válido no formato do schema abaixo, sem texto antes ou depois.
+                - NUNCA use aspas duplas desprotegidas dentro de strings (enunciado, texto, explicacaoGabarito). Caso precise citar termos, artigos ou trechos de lei, utilize aspas simples 'exemplo' ou escape as aspas duplas (\\"exemplo\\").
+                - Todos os campos e itens de array DEVEM ser obrigatoriamente separados por vírgulas válidas.
+                - O nome exato da propriedade de explicação da resposta é 'explicacaoGabarito'.
+                
+                SCHEMA JSON ESPERADO:
+                {
+                  "questoes": [
+                    {
+                      "enunciado": "Texto do enunciado contextualizado...",
+                      "dificuldade": "MEDIA",
+                      "explicacaoGabarito": "Explicação fundamentada do gabarito...",
+                      "alternativas": [
+                        { "ordem": 1, "texto": "Texto da alternativa A", "correta": false },
+                        { "ordem": 2, "texto": "Texto da alternativa B", "correta": true },
+                        { "ordem": 3, "texto": "Texto da alternativa C", "correta": false },
+                        { "ordem": 4, "texto": "Texto da alternativa D", "correta": false }
+                      ]
+                    }
+                  ]
+                }
                 """.formatted(quantidadeQuestoes, materiaNome, topicoNome, proficiencia, banca);
     }
 }
