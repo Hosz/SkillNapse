@@ -11,8 +11,6 @@ public record PlanoEstudoRequest(
         @Size(max = 150, message = "O título não pode ter mais de 150 caracteres.")
         String titulo,
 
-        @NotNull(message = "A descrição é obrigatória.")
-        @NotBlank(message = "A descrição não pode estar vazia.")
         String descricao
 ) {
 }
