@@ -92,9 +92,9 @@ class CalculoDesempenhoSupportTest {
         double severidade = support.calcularIndiceSeveridade(40.0, 4, 10L);
         assertThat(severidade).isEqualTo(240.0);
 
-        // Sem tentativas: severidade = peso * 100.0
+        // Sem tentativas: severidade = 0.0
         double severidadeSemTentativas = support.calcularIndiceSeveridade(0.0, 3, 0L);
-        assertThat(severidadeSemTentativas).isEqualTo(300.0);
+        assertThat(severidadeSemTentativas).isEqualTo(0.0);
     }
 
     @Test

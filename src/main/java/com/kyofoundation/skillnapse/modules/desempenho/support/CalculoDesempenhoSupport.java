@@ -64,7 +64,7 @@ public class CalculoDesempenhoSupport {
         int peso = (pesoEdital != null && pesoEdital > 0) ? pesoEdital : 1;
 
         if (totalTentativas == null || totalTentativas == 0L) {
-            return arredondar(peso * 100.0);
+            return 0.0;
         }
 
         double taxa = taxaAcerto != null ? taxaAcerto : 0.0;
