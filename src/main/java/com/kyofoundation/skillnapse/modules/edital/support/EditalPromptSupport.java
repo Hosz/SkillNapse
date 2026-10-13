@@ -13,9 +13,10 @@ public class EditalPromptSupport {
             DIRETRIZ DE EXTRAÇÃO, ISOLAMENTO DE ESCOPO E ESTRUTURAÇÃO PEDAGÓGICA:
             
             1. ISOLAMENTO ESTRITO DE ESCOPO (BOUNDARY ENFORCEMENT):
-               - Isole cirurgicamente a secção documental que corresponde de forma única e exclusiva ao identificador/perfil/categoria alvo especificado pelo usuário.
-               - Descarte terminantemente qualquer nó, tópico, anexo ou menção pertencente a outros perfis, cargos ou categorias presentes no mesmo documento, impedindo contaminação cruzada.
-               - Não adicione conteúdos externos, generalizações conceituais ou tópicos não expressamente delimitados no excerto do perfil selecionado.
+               - Isole cirurgicamente a secção documental que corresponde ao perfil/cargo alvo especificado pelo usuário.
+               - Verifique o quadro de provas e o programa de disciplinas do cargo alvo: extraia unicamente as matérias que compõem a prova desse cargo.
+               - Descarte terminantemente qualquer disciplina, anexo ou tópico exclusivo de outros cargos ou outras carreiras presentes no mesmo edital (zero contaminação cruzada entre cargos).
+               - Não adicione conteúdos externos ou matérias não delimitadas para o cargo selecionado.
             
             2. ORDENAÇÃO POR GRAFO DE DEPENDÊNCIAS CONCEITUAIS (PEDAGOGICAL ORDERING):
                - Ignore a sequência linear de numeração ou índice do texto-fonte quando esta não refletir dependência didática.
@@ -73,14 +74,22 @@ public class EditalPromptSupport {
     public PromptRequest criarPromptParaExtracao(String pdfExtraido, String cargoAlvo) {
         String cargoInstrucao = (cargoAlvo != null && !cargoAlvo.isBlank())
                 ? String.format("""
-                ISOLAMENTO ESTRITO DE ESCOPO (BOUNDARY ENFORCEMENT):
+                ISOLAMENTO ESTRITO DE ESCOPO (BOUNDARY ENFORCEMENT) - CARGO ALVO:
                 - Perfil/Cargo Alvo Selecionado: "%s"
-                - Isole cirurgicamente a secção documental que corresponde a este cargo.
-                - Capture TANTO as disciplinas de Conhecimentos Gerais/Básicos/Comuns a todos os cargos QUANTO os Conhecimentos Específicos exigidos para este cargo.
-                - Descarte terminantemente tópicos ou matérias pertencentes com exclusividade a outros perfis ou cargos presentes no documento, impedindo contaminação cruzada.
-                - Não adicione conteúdos externos, generalizações conceituais ou matérias não delimitadas para este certame.
+                - Isole cirurgicamente a secção documental e o quadro de provas do cargo "%s".
+                - REGRAS MANDATÓRIAS DE SELEÇÃO DE DISCIPLINAS:
+                  1. Localize a estrutura de provas e o conteúdo programático do cargo "%s".
+                  2. Extraia EXCLUSIVAMENTE as disciplinas que constam na prova deste cargo.
+                  3. Se o edital contiver um bloco de matérias gerais comuns, inclua apenas as matérias que são cobradas na prova do cargo "%s".
+                  4. PROIBIÇÃO ABSOLUTA DE CONTAMINAÇÃO CRUZADA: É terminantemente PROIBIDO incluir matérias, tópicos ou anexos que pertençam com exclusividade a OUTROS cargos do edital (ex: se o cargo for Soldado, NUNCA inclua matérias exclusivas de Oficial; se for Técnico, NUNCA inclua matérias de Analista; se for Agente, NUNCA inclua matérias de Perito ou Delegado).
+                  5. Qualquer disciplina que não faça parte da prova do cargo "%s" DEVE ser descartada sumariamente.
+                - Não adicione conteúdos externos ou matérias não previstas na grade deste cargo.
 
-                """, cargoAlvo.trim())
+                """, cargoAlvo.trim(), cargoAlvo.trim(), cargoAlvo.trim(), cargoAlvo.trim(), cargoAlvo.trim())
+                : "";
+
+        String cargoAlvoLembrete = (cargoAlvo != null && !cargoAlvo.isBlank())
+                ? String.format("- BLINDAGEM DE CARGO: O candidato escolheu o cargo \"%s\". Certifique-se de que TODAS as matérias retornadas são cobradas para este cargo específico. NUNCA misture disciplinas exclusivas de outros cargos.\n", cargoAlvo.trim())
                 : "";
 
         String userPrompt = String.format("""
@@ -92,14 +101,14 @@ public class EditalPromptSupport {
 
                 INSTRUÇÕES CRUCIAIS:
                 - Extraia o nome exato do concurso e o cargo.
-                - ORDENAÇÃO POR GRAFO DE DEPENDÊNCIAS CONCEITUAIS: Reordene os tópicos e subtópicos em sequência pedagógica ascendente (Fundacional/Estrutural -> Dependência Operacional -> Complexidade Progressiva), ignorando a numeração linear do texto-fonte.
+                %s- ORDENAÇÃO POR GRAFO DE DEPENDÊNCIAS CONCEITUAIS: Reordene os tópicos e subtópicos em sequência pedagógica ascendente (Fundacional/Estrutural -> Dependência Operacional -> Complexidade Progressiva), ignorando a numeração linear do texto-fonte.
                 - AGRUPAMENTO POR AFINIDADE ONTOLÓGICA: Agrupe conceitos em tópicos coerentes com sua identidade de domínio (sem misturar blocos mecânicos com contextuais).
                 - PRESERVAÇÃO DE FIDELIDADE (ZERO INTERPOLAÇÃO): Mantenha a integralidade e o sentido dos termos do texto original, alterando unicamente a taxonomia e a indexação sequencial de aprendizagem.
                 - NUNCA resuma ou una disciplinas diferentes em uma só.
                 - Garanta profundidade, riqueza e granularidade pedagógica para todas as disciplinas identificadas.
                 - O array 'materias' NUNCA deve ser retornado vazio. Extraia todas as matérias programáticas com seus respectivos tópicos e subtópicos.
                 - Retorne EXCLUSIVAMENTE o JSON estruturado puro, sem nenhum texto antes ou depois.
-                """, cargoInstrucao, pdfExtraido);
+                """, cargoInstrucao, pdfExtraido, cargoAlvoLembrete);
 
         return new PromptRequest(
                 userPrompt,
