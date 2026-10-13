@@ -137,19 +137,19 @@ public class EditalPromptSupport {
             return "";
         }
 
-        // Se o texto já tiver tamanho compacto (até ~25.000 caracteres), envia completo
-        if (textoCompleto.length() <= 25_000) {
+        // Se o texto já tiver tamanho compacto (até ~20.000 caracteres), envia completo
+        if (textoCompleto.length() <= 20_000) {
             return textoCompleto;
         }
 
         StringBuilder trecho = new StringBuilder();
 
-        // 1. Primeiros 20.000 caracteres (preâmbulo, identificação do órgão, comissão e primeiras tabelas)
-        trecho.append(textoCompleto, 0, 20_000);
+        // 1. Primeiros 10.000 caracteres (preâmbulo, identificação do órgão, certame e comissão)
+        trecho.append(textoCompleto, 0, 10_000);
         trecho.append("\n\n[... TRECHO INTERMEDIÁRIO OMITIDO PARA ANÁLISE FOCADA DE CARGOS ...]\n\n");
 
         // 2. Busca por seções específicas de quadros de vagas/cargos no restante do texto
-        String restante = textoCompleto.substring(20_000);
+        String restante = textoCompleto.substring(10_000);
         Pattern padraoQuadro = Pattern.compile(
                 "(?i)(quadro\\s+de\\s+vagas|dos\\s+cargos|tabela\\s+de\\s+cargos|cargos\\s+e\\s+vagas|distribui[cç][aã]o\\s+das\\s+vagas|anexo\\s+[i1]\\b)",
                 Pattern.UNICODE_CHARACTER_CLASS
@@ -157,12 +157,12 @@ public class EditalPromptSupport {
 
         Matcher matcher = padraoQuadro.matcher(restante);
         int trechosExtras = 0;
-        int maxTrechosExtras = 3;
+        int maxTrechosExtras = 2;
 
         while (matcher.find() && trechosExtras < maxTrechosExtras) {
             int matchStart = matcher.start();
             int startJanela = Math.max(0, matchStart - 100);
-            int endJanela = Math.min(restante.length(), matchStart + 3500);
+            int endJanela = Math.min(restante.length(), matchStart + 3000);
 
             trecho.append("\n--- SEÇÃO DE VAGAS/CARGOS IDENTIFICADA NO EDITAL ---\n");
             trecho.append(restante, startJanela, endJanela);
@@ -178,35 +178,85 @@ public class EditalPromptSupport {
             return "";
         }
 
-        // Se o texto for razoável (até ~80.000 caracteres, cerca de 35 páginas), envia completo
-        if (textoCompleto.length() <= 80_000) {
+        // Se o texto for compacto (até ~25.000 caracteres), envia completo
+        if (textoCompleto.length() <= 25_000) {
             return textoCompleto;
         }
 
         StringBuilder trecho = new StringBuilder();
 
-        // 1. Primeiros 15.000 caracteres (identificação do concurso, banca, quadro geral de provas e pesos)
-        trecho.append(textoCompleto, 0, 15_000);
-        trecho.append("\n\n[... REGRAS BUROCRÁTICAS E PROCEDIMENTAIS OMITIDAS PARA PROCESSAMENTO DE CONTEÚDO ...]\n\n");
+        // 1. Preâmbulo compacto (identificação do concurso, banca e regras gerais das provas)
+        int limitePreambulo = Math.min(3_500, textoCompleto.length());
+        trecho.append(textoCompleto, 0, limitePreambulo);
+        trecho.append("\n\n[... REGRAS BUROCRÁTICAS E ADMINISTRATIVAS OMITIDAS PARA PROCESSAMENTO DE CONTEÚDO ...]\n\n");
 
-        // 2. Localiza onde se inicia a seção de Conteúdo Programático
+        // 2. Localiza onde se inicia a seção REAL de Conteúdo Programático
         Pattern padraoConteudo = Pattern.compile(
-                "(?i)(conte[uú]do\\s+program[aá]tico|objetos\\s+de\\s+avalia[cç][aã]o|programa\\s+das\\s+provas|programa\\s+de\\s+conhecimentos|disciplinas\\s+e\\s+conte[uú]dos|anexo\\s+.*conte[uú]do)",
+                "(?i)(conte[uú]dos?\\s+program[aá]ticos?|objetos?\\s+de\\s+avalia[cç][aã]o|programas?\\s+das?\\s+provas|programas?\\s+de\\s+conhecimentos|disciplinas\\s+e\\s+conte[uú]dos)",
+                Pattern.UNICODE_CHARACTER_CLASS
+        );
+        Pattern padraoDisciplinas = Pattern.compile(
+                "(?i)(l[ií]ngua\\s+portuguesa|portugu[eê]s|matem[aá]tica|racioc[ií]nio|direito|no[cç][oõ]es|inform[aá]tica|conhecimentos\\s+espec[ií]ficos)",
                 Pattern.UNICODE_CHARACTER_CLASS
         );
 
         Matcher matcher = padraoConteudo.matcher(textoCompleto);
-        if (matcher.find()) {
-            int indiceInicio = matcher.start();
-            int fimJanela = Math.min(textoCompleto.length(), indiceInicio + 75_000);
-            trecho.append("--- INÍCIO DO CONTEÚDO PROGRAMÁTICO IDENTIFICADO ---\n");
-            trecho.append(textoCompleto, indiceInicio, fimJanela);
-        } else {
-            // Fallback: se não encontrar os termos, inclui os anexos finais do documento
-            int inicioFinal = Math.max(15_000, textoCompleto.length() - 70_000);
-            trecho.append("--- ANEXOS FINAIS DO EDITAL ---\n");
-            trecho.append(textoCompleto, inicioFinal, textoCompleto.length());
+        int melhorInicio = -1;
+        int primeiroMatch = -1;
+
+        while (matcher.find()) {
+            if (primeiroMatch == -1) {
+                primeiroMatch = matcher.start();
+            }
+            int pos = matcher.start();
+            int fimVerificacao = Math.min(textoCompleto.length(), pos + 2500);
+            String trechoPosterior = textoCompleto.substring(pos, fimVerificacao);
+
+            // Confirma se este marco contém de fato o conteúdo programático real (com disciplinas)
+            if (padraoDisciplinas.matcher(trechoPosterior).find()) {
+                melhorInicio = pos;
+                break;
+            }
         }
+
+        if (melhorInicio == -1) {
+            melhorInicio = primeiroMatch != -1
+                    ? primeiroMatch
+                    : Math.max(limitePreambulo, textoCompleto.length() - 25_000);
+        }
+
+        // 3. Se um cargo específico foi selecionado, busca o início do programa desse cargo
+        int inicioSyllabus = melhorInicio;
+        if (cargoAlvo != null && !cargoAlvo.isBlank()) {
+            String textoAposInicio = textoCompleto.substring(melhorInicio).toLowerCase();
+            String[] palavrasCargo = cargoAlvo.toLowerCase().split("\\W+");
+            for (String palavra : palavrasCargo) {
+                if (palavra.length() > 3
+                        && !palavra.equals("para")
+                        && !palavra.equals("cargo")
+                        && !palavra.equals("policia")
+                        && !palavra.equals("militar")) {
+                    int idx = textoAposInicio.indexOf(palavra);
+                    if (idx != -1) {
+                        inicioSyllabus = Math.max(melhorInicio, melhorInicio + idx - 100);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 4. Limita a janela do syllabus a no máximo 20.000 caracteres para garantir execução ágil
+        int fimJanela = Math.min(textoCompleto.length(), inicioSyllabus + 20_000);
+
+        // Corta antes do próximo anexo se for detectado após os primeiros 1.000 caracteres
+        String trechoSyllabus = textoCompleto.substring(inicioSyllabus, fimJanela);
+        Matcher matcherProximoAnexo = Pattern.compile("(?i)\\n\\s*anexo\\s+[ivx1-9]+").matcher(trechoSyllabus);
+        if (matcherProximoAnexo.find() && matcherProximoAnexo.start() > 1000) {
+            fimJanela = inicioSyllabus + matcherProximoAnexo.start();
+        }
+
+        trecho.append("--- INÍCIO DO CONTEÚDO PROGRAMÁTICO IDENTIFICADO ---\n");
+        trecho.append(textoCompleto, inicioSyllabus, fimJanela);
 
         return trecho.toString();
     }

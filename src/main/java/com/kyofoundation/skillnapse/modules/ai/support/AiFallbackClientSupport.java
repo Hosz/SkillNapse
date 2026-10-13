@@ -49,7 +49,7 @@ public class AiFallbackClientSupport {
     @Value("${skillnapse.ai.fallback.api-key:}")
     private String fallbackApiKey;
 
-    @Value("${skillnapse.ai.fallback.model:llama-3.3-70b-versatile}")
+    @Value("${skillnapse.ai.fallback.model:openai/gpt-oss-120b}")
     private String fallbackModel;
 
     @Value("${skillnapse.ai.fallback.gemini-api-key:}")
@@ -200,10 +200,32 @@ public class AiFallbackClientSupport {
             requestSpec.header(HttpHeaders.AUTHORIZATION, "Bearer " + fallbackApiKey.trim());
         }
 
-        String rawResponse = requestSpec
-                .body(payload)
-                .retrieve()
-                .body(String.class);
+        String rawResponse;
+        try {
+            rawResponse = requestSpec
+                    .body(payload)
+                    .retrieve()
+                    .body(String.class);
+        } catch (Exception ex) {
+            String msg = ex.getMessage() != null ? ex.getMessage().toLowerCase() : "";
+            if ((msg.contains("413") || msg.contains("request too large") || msg.contains("rate_limit_exceeded"))
+                    && "openai/gpt-oss-120b".equals(payload.get("model"))) {
+                log.warn("Modelo openai/gpt-oss-120b excedeu limite de tokens na Groq. Tentando automaticamente openai/gpt-oss-20b...");
+                payload.put("model", "openai/gpt-oss-20b");
+                RestClient.RequestBodySpec retrySpec = client.post()
+                        .uri(url)
+                        .contentType(MediaType.APPLICATION_JSON);
+                if (fallbackApiKey != null && !fallbackApiKey.isBlank()) {
+                    retrySpec.header(HttpHeaders.AUTHORIZATION, "Bearer " + fallbackApiKey.trim());
+                }
+                rawResponse = retrySpec
+                        .body(payload)
+                        .retrieve()
+                        .body(String.class);
+            } else {
+                throw ex;
+            }
+        }
 
         try {
             JsonNode root = objectMapper.readTree(rawResponse);
