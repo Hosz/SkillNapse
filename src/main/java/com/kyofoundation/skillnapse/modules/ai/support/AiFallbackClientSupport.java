@@ -16,6 +16,7 @@ import org.springframework.web.client.RestClient;
 import jakarta.annotation.PostConstruct;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,22 +65,22 @@ public class AiFallbackClientSupport {
             log.info("[IA Fallback] Contingência multi-provedor desativada (skillnapse.ai.fallback.enabled=false).");
             return;
         }
-        boolean temGemini = geminiFallbackApiKey != null && !geminiFallbackApiKey.isBlank();
-        boolean temOpenAi = fallbackApiKey != null && !fallbackApiKey.isBlank();
-        log.info("[IA Fallback] Sistema de contingência ATIVO! Preferência: [{}]. Provedor OpenAI/Groq={}[{}], Gemini Secundário={}[{}].",
+        List<String> geminiKeys = extrairChavesGemini();
+        List<String> openAiKeys = extrairChavesOpenAi();
+        log.info("[IA Fallback] Sistema de contingência ATIVO! Preferência: [{}]. Provedor OpenAI/Groq={} chave(s)[{}], Gemini Secundário={} chave(s)[{}].",
                 fallbackProvider,
-                temOpenAi ? "CONFIGURADO" : "NÃO CONFIGURADO",
+                openAiKeys.size(),
                 fallbackModel,
-                temGemini ? "CONFIGURADO" : "NÃO CONFIGURADO",
+                geminiKeys.size(),
                 geminiFallbackModel
         );
     }
 
     public boolean isFallbackDisponivel() {
-        if (geminiFallbackApiKey != null && !geminiFallbackApiKey.isBlank()) {
+        if (!extrairChavesGemini().isEmpty()) {
             return true;
         }
-        if (fallbackApiKey != null && !fallbackApiKey.isBlank()) {
+        if (!extrairChavesOpenAi().isEmpty()) {
             return true;
         }
         return "ollama".equalsIgnoreCase(fallbackProvider) && fallbackEnabled;
@@ -88,29 +89,46 @@ public class AiFallbackClientSupport {
     public AiGenerationResponse executeFallback(PromptRequest request) {
         log.info("Acionando cadeia de provedores de IA secundários (fallback)...");
 
-        boolean temGemini = geminiFallbackApiKey != null && !geminiFallbackApiKey.isBlank();
-        boolean temOpenAiCompativel = (fallbackApiKey != null && !fallbackApiKey.isBlank())
+        List<String> geminiKeys = extrairChavesGemini();
+        List<String> openAiKeys = extrairChavesOpenAi();
+        boolean temOpenAiCompativel = !openAiKeys.isEmpty()
                 || ("ollama".equalsIgnoreCase(fallbackProvider) && fallbackEnabled);
 
         boolean priorizarGemini = "gemini".equalsIgnoreCase(fallbackProvider);
 
         List<FallbackStep> chain = new ArrayList<>();
+
+        Runnable addGeminiSteps = () -> {
+            for (int i = 0; i < geminiKeys.size(); i++) {
+                String key = geminiKeys.get(i);
+                String stepName = geminiKeys.size() > 1
+                        ? String.format("Gemini Secundário (Chave %d)", i + 1)
+                        : "Gemini Secundário";
+                chain.add(new FallbackStep(stepName, () -> chamarGeminiSecundario(request, key)));
+            }
+        };
+
+        Runnable addOpenAiSteps = () -> {
+            if ("ollama".equalsIgnoreCase(fallbackProvider) && openAiKeys.isEmpty()) {
+                chain.add(new FallbackStep("ollama", () -> chamarOpenAiCompativel(request, "")));
+            } else {
+                String nomeBase = fallbackProvider != null && !fallbackProvider.isBlank() ? fallbackProvider : "OpenAI-Compatível";
+                for (int i = 0; i < openAiKeys.size(); i++) {
+                    String key = openAiKeys.get(i);
+                    String stepName = openAiKeys.size() > 1
+                            ? String.format("%s (Chave %d)", nomeBase, i + 1)
+                            : nomeBase;
+                    chain.add(new FallbackStep(stepName, () -> chamarOpenAiCompativel(request, key)));
+                }
+            }
+        };
+
         if (priorizarGemini) {
-            if (temGemini) {
-                chain.add(new FallbackStep("Gemini Secundário", () -> chamarGeminiSecundario(request)));
-            }
-            if (temOpenAiCompativel) {
-                String nome = fallbackProvider != null && !fallbackProvider.isBlank() ? fallbackProvider : "OpenAI-Compatível";
-                chain.add(new FallbackStep(nome, () -> chamarOpenAiCompativel(request)));
-            }
+            addGeminiSteps.run();
+            addOpenAiSteps.run();
         } else {
-            if (temOpenAiCompativel) {
-                String nome = fallbackProvider != null && !fallbackProvider.isBlank() ? fallbackProvider : "OpenAI-Compatível";
-                chain.add(new FallbackStep(nome, () -> chamarOpenAiCompativel(request)));
-            }
-            if (temGemini) {
-                chain.add(new FallbackStep("Gemini Secundário", () -> chamarGeminiSecundario(request)));
-            }
+            addOpenAiSteps.run();
+            addGeminiSteps.run();
         }
 
         if (chain.isEmpty()) {
@@ -157,7 +175,7 @@ public class AiFallbackClientSupport {
         }
     }
 
-    private AiGenerationResponse chamarOpenAiCompativel(PromptRequest request) {
+    private AiGenerationResponse chamarOpenAiCompativel(PromptRequest request, String apiKey) {
         RestClient client = this.restClient;
         String url = normalizarUrlCompletions(fallbackBaseUrl);
 
@@ -181,8 +199,8 @@ public class AiFallbackClientSupport {
                 .uri(url)
                 .contentType(MediaType.APPLICATION_JSON);
 
-        if (fallbackApiKey != null && !fallbackApiKey.isBlank()) {
-            requestSpec.header(HttpHeaders.AUTHORIZATION, "Bearer " + fallbackApiKey.trim());
+        if (apiKey != null && !apiKey.isBlank()) {
+            requestSpec.header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey.trim());
         }
 
         String rawResponse = requestSpec
@@ -215,12 +233,12 @@ public class AiFallbackClientSupport {
         }
     }
 
-    private AiGenerationResponse chamarGeminiSecundario(PromptRequest request) {
+    private AiGenerationResponse chamarGeminiSecundario(PromptRequest request, String apiKey) {
         RestClient client = this.restClient;
         String url = String.format(
                 "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s",
                 geminiFallbackModel,
-                geminiFallbackApiKey.trim()
+                apiKey.trim()
         );
 
         Map<String, Object> payload = new HashMap<>();
@@ -272,6 +290,26 @@ public class AiFallbackClientSupport {
             log.error("Erro ao analisar resposta da API secundária do Gemini: {}", ex.getMessage());
             throw new RuntimeException("Erro ao processar resposta do Gemini secundário", ex);
         }
+    }
+
+    private List<String> extrairChavesGemini() {
+        if (geminiFallbackApiKey == null || geminiFallbackApiKey.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(geminiFallbackApiKey.split("[,;\\n]"))
+                .map(String::trim)
+                .filter(k -> !k.isBlank())
+                .toList();
+    }
+
+    private List<String> extrairChavesOpenAi() {
+        if (fallbackApiKey == null || fallbackApiKey.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(fallbackApiKey.split("[,;\\n]"))
+                .map(String::trim)
+                .filter(k -> !k.isBlank())
+                .toList();
     }
 
     private String normalizarUrlCompletions(String baseUrl) {

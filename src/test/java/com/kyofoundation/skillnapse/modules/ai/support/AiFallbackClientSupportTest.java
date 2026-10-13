@@ -40,6 +40,24 @@ class AiFallbackClientSupportTest {
     }
 
     @Test
+    @DisplayName("Deve reportar disponibilidade quando múltiplas chaves gemini separadas por vírgula forem configuradas")
+    void deveReportarDisponivelComMultiplasChavesGemini() {
+        AiFallbackClientSupport support = new AiFallbackClientSupport();
+        ReflectionTestUtils.setField(support, "geminiFallbackApiKey", "AIzaSy_key1, AIzaSy_key2, AIzaSy_key3");
+
+        assertThat(support.isFallbackDisponivel()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Deve reportar disponibilidade quando múltiplas chaves fallbackApiKey (Groq/OpenAI) forem configuradas")
+    void deveReportarDisponivelComMultiplasChavesOpenAi() {
+        AiFallbackClientSupport support = new AiFallbackClientSupport();
+        ReflectionTestUtils.setField(support, "fallbackApiKey", "gsk_1, gsk_2");
+
+        assertThat(support.isFallbackDisponivel()).isTrue();
+    }
+
+    @Test
     @DisplayName("Deve lançar exceção quando tentar executar fallback sem nenhum provedor configurado")
     void deveLancarExcecaoQuandoNenhumProvedorConfigurado() {
         AiFallbackClientSupport support = new AiFallbackClientSupport();
