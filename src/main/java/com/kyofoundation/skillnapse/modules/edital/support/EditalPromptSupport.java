@@ -10,29 +10,29 @@ public class EditalPromptSupport {
             Você é um especialista sênior em engenharia pedagógica e curadoria de conteúdo programático para concursos públicos e vestibulares da plataforma SkillNapse.
             Sua missão é transformar o texto bruto do edital em uma árvore hierárquica rica, estruturada e de alto valor pedagógico para o planejamento de estudos do candidato.
             
-            DIRETRIZES CRÍTICAS DE ESTRUTURAÇÃO:
+            DIRETRIZ DE EXTRAÇÃO, ISOLAMENTO DE ESCOPO E ESTRUTURAÇÃO PEDAGÓGICA:
             
-            1. NOMENCLATURA DAS MATÉRIAS:
-               - Identifique as disciplinas macro exigidas com nomes canônicos e claros.
+            1. ISOLAMENTO ESTRITO DE ESCOPO (BOUNDARY ENFORCEMENT):
+               - Isole cirurgicamente a secção documental que corresponde de forma única e exclusiva ao identificador/perfil/categoria alvo especificado pelo usuário.
+               - Descarte terminantemente qualquer nó, tópico, anexo ou menção pertencente a outros perfis, cargos ou categorias presentes no mesmo documento, impedindo contaminação cruzada.
+               - Não adicione conteúdos externos, generalizações conceituais ou tópicos não expressamente delimitados no excerto do perfil selecionado.
             
-            2. SEQUENCIAMENTO PEDAGÓGICO OBRIGATÓRIO (TRILHA PROGRESSIVA DE ESTUDO):
-               - Agrupamento temático isolado NÃO é suficiente: não basta reunir assuntos afins sob um mesmo tópico se a ordem de estudo estiver incorreta.
-               - É MANDATÓRIO que a lista de tópicos de cada matéria represente uma sequência cronológica e didática real de aprendizado (passo a passo de estudo, do início ao nível avançado), ignorando totalmente a ordem física ou burocrática em que o edital foi redigido.
-               - Progressão de aprendizado obrigatória para a ordenação dos tópicos:
-                 * Início (Fundamentação / Pré-requisitos): Conceitos elementares, definições basilares, vocabulário essencial e princípios introdutórios indispensáveis para compreender os temas seguintes.
-                 * Meio (Desenvolvimento / Mecânica): Estruturas centrais, operações, procedimentos normais e regras gerais da matéria.
-                 * Fim (Aprofundamento / Aplicação): Exceções, casos especiais, aplicações práticas complexas e tópicos integradores.
-               - O mesmo sequenciamento pedagógico progressivo aplica-se OBRIGATORIAMENTE à lista de 'subtopicos' dentro de cada tópico: o primeiro subtópico inicia os fundamentos do tema e os subsequentes desdobram e aprofundam.
+            2. ORDENAÇÃO POR GRAFO DE DEPENDÊNCIAS CONCEITUAIS (PEDAGOGICAL ORDERING):
+               - Ignore a sequência linear de numeração ou índice do texto-fonte quando esta não refletir dependência didática.
+               - Reordene a sequência de apresentação de forma ascendente, aplicando topologia de pré-requisitos:
+                 a) Fundacional/Estrutural: termos fundamentais, definições de base, regras gerais e morfologia do domínio antes de regras de concordância, exceções ou aplicações compostas.
+                 b) Dependência Operacional: todo conceito que serve de premissa, base analítica ou ferramenta de resolução para outro deve preceder obrigatoriamente o tópico que dele decorre.
+                 c) Complexidade Progressiva: do elementar para o complexo; do isolado para o articulado; da teoria fundacional para a aplicação analítica ou interpretativa.
+               - O mesmo ordenamento por dependência conceitual aplica-se estritamente à sequência dos 'subtopicos' dentro de cada tópico.
             
-            3. DECOMPOSIÇÃO OBRIGATÓRIA DOS TÓPICOS (NUNCA GENERALIZE):
-               - REGRA INEGOCIÁVEL: NUNCA crie um tópico único com o mesmo nome da matéria.
-               - Toda matéria DEVE ser decomposta em múltiplos tópicos específicos (geralmente entre 3 e 8 tópicos por matéria), dispostos na sequência pedagógica exata de estudo.
-               - Se o edital apresentar itens numerados ou tópicos separados por pontos/vírgulas, agrupe ou mapeie cada um desses temas como tópicos claros posicionados na ordem didática correta.
+            3. AGRUPAMENTO POR AFINIDADE ONTOLÓGICA (COERÊNCIA TAXONÔMICA):
+               - Agrupe subtópicos em módulos de acordo com a sua identidade de domínio, garantindo que conceitos que operam em conjunto pertençam ao mesmo ramo hierárquico.
+               - Evite alocar tópicos de aplicação semântica, estilística ou contextual dentro de blocos estritamente mecânicos/estruturais, e vice-versa.
+               - REGRA INEGOCIÁVEL: NUNCA crie um tópico único com o mesmo nome da matéria. Toda matéria DEVE ser decomposta em múltiplos tópicos (geralmente entre 3 e 8 tópicos por matéria).
             
-            4. EXTRAÇÃO MINUCIOSA DE SUBTÓPICOS:
-               - Cada tópico DEVE conter uma lista de 'subtopicos' detalhando os conceitos, teorias, regras específicas, desdobramentos e itens pontuais a serem estudados.
-               - NUNCA deixe a lista de subtópicos vazia se o edital detalha os assuntos daquele tópico.
-               - Subtópicos devem ser frases/termos objetivos e claros, dispostos na ordem lógica e progressiva de aprendizado.
+            4. PRESERVAÇÃO DE FIDELIDADE (ZERO INTERPOLAÇÃO):
+               - Mantenha a integralidade e o sentido dos termos do texto original, alterando unicamente a taxonomia (agrupamentos em nós superiores) e a indexação sequencial de aprendizagem (ordem de execução).
+               - NUNCA resuma ou una disciplinas diferentes em uma só.
             
             5. PESO NO EDITAL ('pesoEdital'):
                - Atribua um número inteiro de 1 a 10 para cada tópico representando sua relevância para a aprovação:
@@ -55,7 +55,14 @@ public class EditalPromptSupport {
 
     public PromptRequest criarPromptParaExtracao(String pdfExtraido, String cargoAlvo) {
         String cargoInstrucao = (cargoAlvo != null && !cargoAlvo.isBlank())
-                ? String.format("ATENÇÃO: O foco específico do candidato é o cargo: \"%s\". Extraia EXCLUSIVAMENTE o conteúdo programático e disciplinas pertinentes a este cargo, desconsiderando matérias exclusivas de outros cargos presentes no edital.\n\n", cargoAlvo.trim())
+                ? String.format("""
+                ISOLAMENTO ESTRITO DE ESCOPO (BOUNDARY ENFORCEMENT):
+                - Perfil/Cargo Alvo Selecionado: "%s"
+                - Isole cirurgicamente a secção documental que corresponde de forma única e exclusiva a este cargo.
+                - Descarte terminantemente qualquer nó, tópico, anexo ou menção pertencente a outros perfis, cargos ou categorias presentes no mesmo documento, impedindo contaminação cruzada.
+                - Não adicione conteúdos externos, generalizações conceituais ou matérias não delimitadas para este cargo.
+
+                """, cargoAlvo.trim())
                 : "";
 
         String userPrompt = String.format("""
@@ -67,8 +74,9 @@ public class EditalPromptSupport {
 
                 INSTRUÇÕES CRUCIAIS:
                 - Extraia o nome exato do concurso e o cargo.
-                - REORGANIZAÇÃO PEDAGÓGICA MANDATÓRIA DA SEQUÊNCIA DE ESTUDO: Não faça apenas agrupamento temático; ordene os tópicos e os subtópicos de cada disciplina em uma sequência cronológica progressiva de aprendizado (fundamentos e pré-requisitos primeiro, desenvolvimento intermediário ao centro, e aplicações avançadas/exceções ao final). Ignore a ordem física do texto original do edital caso não seja didática.
-                - Decomponha CADA matéria em múltiplos tópicos ordenados pedagogicamente e liste TODOS os subtópicos correspondentes na mesma progressão de aprendizado.
+                - ORDENAÇÃO POR GRAFO DE DEPENDÊNCIAS CONCEITUAIS: Reordene os tópicos e subtópicos em sequência pedagógica ascendente (Fundacional/Estrutural -> Dependência Operacional -> Complexidade Progressiva), ignorando a numeração linear do texto-fonte.
+                - AGRUPAMENTO POR AFINIDADE ONTOLÓGICA: Agrupe conceitos em tópicos coerentes com sua identidade de domínio (sem misturar blocos mecânicos com contextuais).
+                - PRESERVAÇÃO DE FIDELIDADE (ZERO INTERPOLAÇÃO): Mantenha a integralidade e o sentido dos termos do texto original, alterando unicamente a taxonomia e a indexação sequencial de aprendizagem.
                 - NUNCA resuma ou una disciplinas diferentes em uma só.
                 - Garanta profundidade, riqueza e granularidade pedagógica para todas as disciplinas identificadas.
                 - Retorne EXCLUSIVAMENTE o JSON estruturado puro, sem nenhum texto antes ou depois.
