@@ -113,11 +113,29 @@ public class AiOrchestratorService {
 
         return executeWithQuotaHandling(
                 () -> {
-                    ChatClient chatClient = chatClientBuilder.build();
-                    ChatClient.ChatClientRequestSpec spec = chatClient.prompt().user(request.prompt());
-                    spec = applyStructuredOptions(spec, request);
+                    try {
+                        ChatClient chatClient = chatClientBuilder.build();
+                        ChatClient.ChatClientRequestSpec spec = chatClient.prompt().user(request.prompt());
+                        spec = applyStructuredOptions(spec, request);
 
-                    return spec.call().entity(converter);
+                        return spec.call().entity(converter);
+                    } catch (Exception ex) {
+                        if (request.metadata() != null && Boolean.TRUE.equals(request.metadata().get("googleSearch")) && !isQuotaOrRateLimitException(ex)) {
+                            log.warn("Falha com busca web no generateStructured ({}). Tentando fallback estruturado sem busca web...", ex.getMessage());
+                            PromptRequest requestSemBusca = new PromptRequest(
+                                    request.prompt(),
+                                    request.systemMessage(),
+                                    request.temperature(),
+                                    request.maxTokens(),
+                                    java.util.Map.of()
+                            );
+                            ChatClient chatClientFallback = chatClientBuilder.build();
+                            ChatClient.ChatClientRequestSpec specFallback = chatClientFallback.prompt().user(requestSemBusca.prompt());
+                            specFallback = applyStructuredOptions(specFallback, requestSemBusca);
+                            return specFallback.call().entity(converter);
+                        }
+                        throw ex;
+                    }
                 },
                 () -> aiFallbackClientSupport.executeFallbackStructured(request, responseType),
                 "generateStructured (" + responseType.getSimpleName() + ")"
@@ -440,6 +458,14 @@ public class AiOrchestratorService {
                     builder.getClass().getMethod("maxOutputTokens", Integer.class).invoke(builder, request.maxTokens());
                 }
 
+                if (request.metadata() != null && Boolean.TRUE.equals(request.metadata().get("googleSearch"))) {
+                    try {
+                        builder.getClass().getMethod("googleSearchRetrieval", Boolean.class).invoke(builder, true);
+                    } catch (Throwable t) {
+                        log.debug("googleSearchRetrieval não disponível em GoogleGenAiChatOptions: {}", t.getMessage());
+                    }
+                }
+
                 if (builder instanceof ChatOptions.Builder<?> chatOptionsBuilder) {
                     return spec.options(chatOptionsBuilder);
                 }
@@ -454,6 +480,26 @@ public class AiOrchestratorService {
     private ChatClient.ChatClientRequestSpec applyPromptOptions(ChatClient.ChatClientRequestSpec spec, PromptRequest request) {
         if (request.systemMessage() != null && !request.systemMessage().isBlank()) {
             spec = spec.system(request.systemMessage());
+        }
+
+        String provider = getActiveProviderName();
+        if ("gemini".equalsIgnoreCase(provider) && request.metadata() != null && Boolean.TRUE.equals(request.metadata().get("googleSearch"))) {
+            try {
+                Class<?> optionsClass = Class.forName("org.springframework.ai.google.genai.GoogleGenAiChatOptions");
+                Object builder = optionsClass.getMethod("builder").invoke(null);
+                if (request.temperature() != null) {
+                    builder.getClass().getMethod("temperature", Double.class).invoke(builder, request.temperature());
+                }
+                if (request.maxTokens() != null) {
+                    builder.getClass().getMethod("maxOutputTokens", Integer.class).invoke(builder, request.maxTokens());
+                }
+                builder.getClass().getMethod("googleSearchRetrieval", Boolean.class).invoke(builder, true);
+                if (builder instanceof ChatOptions.Builder<?> chatOptionsBuilder) {
+                    return spec.options(chatOptionsBuilder);
+                }
+            } catch (Throwable t) {
+                log.debug("Não foi possível configurar googleSearchRetrieval no generate normal: {}", t.getMessage());
+            }
         }
 
         ChatOptions.Builder<?> optionsBuilder = ChatOptions.builder();

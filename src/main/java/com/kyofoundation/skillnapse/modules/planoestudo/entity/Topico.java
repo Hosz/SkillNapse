@@ -1,6 +1,7 @@
 package com.kyofoundation.skillnapse.modules.planoestudo.entity;
 
 import com.kyofoundation.skillnapse.modules.planoestudo.enums.NivelProficiencia;
+import com.kyofoundation.skillnapse.modules.planoestudo.enums.RelevanciaBanca;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,7 +39,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(of = {"id", "titulo", "nivelProficiencia", "pesoEdital", "concluido", "ordem"})
+@ToString(of = {"id", "titulo", "nivelProficiencia", "pesoEdital", "relevanciaBanca", "concluido", "ordem"})
 @EqualsAndHashCode(of = "id")
 public class Topico {
 
@@ -66,6 +67,13 @@ public class Topico {
     @Builder.Default
     @Column(name = "peso_edital", nullable = false)
     private Integer pesoEdital = 1;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "relevancia_banca", length = 30)
+    private RelevanciaBanca relevanciaBanca;
+
+    @Column(name = "justificativa_peso", length = 1000)
+    private String justificativaPeso;
 
     @Builder.Default
     @Column(name = "concluido", nullable = false)

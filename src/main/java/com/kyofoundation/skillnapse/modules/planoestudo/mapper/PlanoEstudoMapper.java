@@ -23,6 +23,7 @@ public class PlanoEstudoMapper {
                 planoEstudo.getId(),
                 planoEstudo.getTitulo(),
                 planoEstudo.getDescricao(),
+                planoEstudo.getBanca(),
                 planoEstudo.getAtivo(),
                 planoEstudo.getCriadoEm(),
                 planoEstudo.getAtualizadoEm()

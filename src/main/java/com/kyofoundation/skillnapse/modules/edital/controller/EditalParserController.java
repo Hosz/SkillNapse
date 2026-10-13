@@ -64,7 +64,13 @@ public class EditalParserController {
     }
 
     @PostMapping(value = "/parse", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Upload e parsing de edital em PDF", description = "Extrai o conteúdo programático do edital em PDF e cria um rascunho com a árvore estruturada via Spring AI.")
+    @Operation(
+            summary = "Upload e parsing de edital em PDF com Raio-X da Banca",
+            description = "Extrai o conteúdo programático do edital em PDF e cria um rascunho com a árvore estruturada via IA. " +
+                    "Realiza pesquisa web e análise estatística de provas anteriores da banca organizadora (últimos 3 a 5 anos), " +
+                    "calibrando o peso dos tópicos e fornecendo justificativas transparentes. Por envolver pesquisa e processamento de IA, " +
+                    "a operação pode levar de 15 a 35 segundos."
+    )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Edital processado com sucesso e rascunho criado",
                     content = @Content(schema = @Schema(implementation = RascunhoEditalResponse.class))),

@@ -9,10 +9,21 @@ public record EditalArvoreEstruturada(
         @NotBlank
         String nomeConcurso,
 
+        String banca,
+
+        String carreira,
+
         @NotBlank
         String cargo,
 
         @NotEmpty
         List<EditalMaterialItem> materias
 ) {
+    public EditalArvoreEstruturada(
+            String nomeConcurso,
+            String cargo,
+            List<EditalMaterialItem> materias
+    ) {
+        this(nomeConcurso, null, null, cargo, materias);
+    }
 }

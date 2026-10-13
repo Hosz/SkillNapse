@@ -3,38 +3,49 @@ package com.kyofoundation.skillnapse.modules.edital.support;
 import com.kyofoundation.skillnapse.modules.ai.dto.PromptRequest;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @Component
 public class EditalPromptSupport {
 
     private static final String SYSTEM_PROMPT = """
-            Você é um especialista sênior em engenharia pedagógica e curadoria de conteúdo programático para concursos públicos e vestibulares da plataforma SkillNapse.
-            Sua missão é transformar o texto bruto do edital em uma árvore hierárquica rica, estruturada e de alto valor pedagógico para o planejamento de estudos do candidato.
-            
+            Você é um especialista sênior em engenharia pedagógica, análise estatística e curadoria de conteúdo programático para concursos públicos e vestibulares da plataforma SkillNapse.
+            Sua missão é transformar o texto bruto do edital em uma árvore hierárquica rica, estruturada e de alto valor pedagógico para o planejamento de estudos do candidato, aplicando a metodologia de RAIO-X DA BANCA.
+
             DIRETRIZES CRÍTICAS DE ESTRUTURAÇÃO:
-            
-            1. NOMENCLATURA DAS MATÉRIAS:
-               - Identifique as disciplinas macro exigidas (ex: "Língua Portuguesa", "Raciocínio Lógico e Matemático", "Direito Constitucional", "Direito Administrativo", "Informática e Tecnologia da Informação", "Conhecimentos Específicos").
-            
-            2. DECOMPOSIÇÃO OBRIGATÓRIA DOS TÓPICOS (NUNCA GENERALIZE):
+
+            1. IDENTIFICAÇÃO DO CERTAME, BANCA E CARREIRA:
+               - Identifique o nome oficial do concurso ('nomeConcurso') e o cargo alvo ('cargo').
+               - Identifique com precisão a BANCA ORGANIZADORA ('banca') do certame (ex: "FGV", "Cebraspe", "FCC", "Vunesp", "Cesgranrio", "Idecan", "AOCP", "Instituto Consulplan").
+               - Identifique a CARREIRA/ÁREA ('carreira') do cargo (ex: "Policial", "Fiscal/Controle", "Tribunais/Jurídica", "Administrativa", "Bancária", "Tecnologia da Informação", "Saúde").
+
+            2. NOMENCLATURA DAS MATÉRIAS:
+               - Identifique as disciplinas macro exigidas (ex: "Língua Portuguesa", "Raciocínio Lógico-Matemático", "Direito Constitucional", "Direito Administrativo", "Informática e Tecnologia da Informação", "Conhecimentos Específicos").
+
+            3. DECOMPOSIÇÃO OBRIGATÓRIA DOS TÓPICOS (NUNCA GENERALIZE):
                - REGRA INEGOCIÁVEL: NUNCA crie um tópico único com o mesmo nome da matéria (por exemplo, sob a matéria "Língua Portuguesa", é PROIBIDO criar um tópico chamado "Língua Portuguesa").
                - Toda matéria DEVE ser decomposta em múltiplos tópicos temáticos específicos (geralmente entre 3 e 8 tópicos por matéria).
-               - Se o edital apresentar itens numerados ou tópicos separados por pontos/vírgulas (ex: "1. Morfologia e sintaxe", "2. Atos e poderes administrativos"), agrupe ou mapeie cada um desses temas como tópicos temáticos claros.
-            
-            3. EXTRAÇÃO MINUCIOSA DE SUBTÓPICOS:
+               - Se o edital apresentar itens numerados ou tópicos separados por pontos/vírgulas, agrupe ou mapeie cada um desses temas como tópicos temáticos claros.
+
+            4. EXTRAÇÃO MINUCIOSA DE SUBTÓPICOS:
                - Cada tópico DEVE conter uma lista de 'subtopicos' detalhando os conceitos, teorias, leis específicas, desdobramentos e itens pontuais a serem estudados.
                - NUNCA deixe a lista de subtópicos vazia se o edital detalha os assuntos daquele tópico.
                - Subtópicos devem ser frases/termos objetivos e claros (ex: "Compreensão e interpretação de textos", "Concordância verbal e nominal", "Princípios fundamentais da administração pública", "Regime jurídico dos servidores públicos").
-            
-            4. PESO NO EDITAL ('pesoEdital'):
-               - Atribua um número inteiro de 1 a 10 para cada tópico representando sua relevância para a aprovação:
-                 * 8 a 10: Tópicos de altíssima relevância, disciplinas eliminatórias ou com grande número de questões (ex: Redação, Língua Portuguesa, matérias específicas essenciais do cargo).
-                 * 5 a 7: Tópicos de média a alta incidência e relevância intermediária.
-                 * 1 a 4: Tópicos introdutórios, teóricos básicos ou de menor peso relativo.
-            
-            5. FILTRO E LIMPEZA:
+
+            5. METODOLOGIA DE RAIO-X DA BANCA E PESO CALIBRADO ('pesoEdital', 'relevanciaBanca', 'justificativaPeso'):
+               - Cruze as matérias e tópicos exigidos no edital com o HISTÓRICO ESTATÍSTICO DE PROVAS REAIS da BANCA organizadora nos ÚLTIMOS 3 A 5 ANOS para essa CARREIRA/ÁREA.
+               - O 'pesoEdital' DEVE ser um número inteiro de 1 a 10 refletindo o equilíbrio entre a pontuação/questões formais do edital e a RECORRÊNCIA ESTATÍSTICA REAL em provas anteriores da banca:
+                 * 9 ou 10: Tópicos de altíssima incidência histórica da banca (tópicos mais cobrados nas provas recentes dessa carreira) ou disciplinas eliminatórias com maior volume de questões.
+                 * 7 ou 8: Tópicos de média-alta recorrência, cobrados de forma frequente e constante pela banca.
+                 * 5 ou 6: Tópicos de incidência intermediária ou moderada.
+                 * 1 a 4: Tópicos introdutórios, teóricos básicos ou raramente exigidos em provas recentes da banca.
+               - Preencha 'relevanciaBanca' com: "MUITO_ALTA", "ALTA", "MEDIA" ou "BAIXA".
+               - Preencha 'justificativaPeso' com uma justificativa pedagógica transparente e objetiva citando a banca e a tendência histórica (ex: "A FGV cobrou interpretação de texto e tipologia em cerca de 40% das questões de Português em certames policiais recentes (2022-2025).").
+
+            6. FILTRO E LIMPEZA:
                - Ignore regras burocráticas irrelevantes (isenção de taxa, locais de inscrição, recursos, prazos de pagamento). Foque estritamente no Conteúdo Programático exigido nas provas.
 
-            6. FORMATO DE SAÍDA ESTRITO:
+            7. FORMATO DE SAÍDA ESTRITO:
                - Retorne OBRIGATORIAMENTE um objeto JSON RFC8259 puro e válido aderente ao schema solicitado.
                - NÃO inclua preâmbulos, títulos, cumprimentos, textos introdutórios ou comentários antes ou depois do JSON.
                - Inicie diretamente com '{' e termine com '}'.
@@ -57,8 +68,9 @@ public class EditalPromptSupport {
                 --- FIM DO TEXTO DO EDITAL ---
 
                 INSTRUÇÕES CRUCIAIS:
-                - Extraia o nome exato do concurso e o cargo.
+                - Identifique o nome do concurso, a BANCA organizadora, a CARREIRA/ÁREA e o cargo.
                 - Decomponha CADA matéria em seus respectivos tópicos temáticos e liste TODOS os subtópicos correspondentes.
+                - Calibre o 'pesoEdital', 'relevanciaBanca' e elabore a 'justificativaPeso' com base no Raio-X da banca para essa carreira nos últimos 3 a 5 anos.
                 - NUNCA resuma ou una disciplinas diferentes em uma só.
                 - Garanta profundidade, riqueza e granularidade pedagógica para todas as disciplinas identificadas.
                 - Retorne EXCLUSIVAMENTE o JSON estruturado puro, sem nenhum texto antes ou depois.
@@ -68,7 +80,8 @@ public class EditalPromptSupport {
                 userPrompt,
                 SYSTEM_PROMPT,
                 0.2,
-                16384
+                16384,
+                Map.of("googleSearch", true)
         );
     }
 

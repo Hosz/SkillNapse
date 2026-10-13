@@ -15,6 +15,7 @@ import com.kyofoundation.skillnapse.modules.planoestudo.entity.Materia;
 import com.kyofoundation.skillnapse.modules.planoestudo.entity.PlanoEstudo;
 import com.kyofoundation.skillnapse.modules.planoestudo.entity.Topico;
 import com.kyofoundation.skillnapse.modules.planoestudo.enums.NivelProficiencia;
+import com.kyofoundation.skillnapse.modules.planoestudo.enums.RelevanciaBanca;
 import com.kyofoundation.skillnapse.modules.planoestudo.repository.MateriaRepository;
 import com.kyofoundation.skillnapse.modules.planoestudo.repository.PlanoEstudoRepository;
 import com.kyofoundation.skillnapse.modules.planoestudo.repository.TopicoRepository;
@@ -52,6 +53,7 @@ public class EditalConversaoSupport {
                 .usuario(usuario)
                 .titulo(tituloPlano)
                 .descricao(descricao)
+                .banca(normalizarBanca(arvore.banca()))
                 .ativo(true)
                 .build();
         plano = planoEstudoRepository.save(plano);
@@ -80,11 +82,16 @@ public class EditalConversaoSupport {
                     int peso = (itemTopico.pesoEdital() != null && itemTopico.pesoEdital() >= 1 && itemTopico.pesoEdital() <= 10)
                             ? itemTopico.pesoEdital() : 1;
 
+                    RelevanciaBanca relevancia = parseRelevancia(itemTopico.relevanciaBanca());
+                    String justificativa = normalizarJustificativa(itemTopico.justificativaPeso());
+
                     Topico topicoPai = Topico.builder()
                             .materia(materia)
                             .topicoPai(null)
                             .titulo(normalizarTitulo(itemTopico.titulo()))
                             .pesoEdital(peso)
+                            .relevanciaBanca(relevancia)
+                            .justificativaPeso(justificativa)
                             .nivelProficiencia(NivelProficiencia.INICIANTE)
                             .concluido(false)
                             .ordem(j)
@@ -100,6 +107,8 @@ public class EditalConversaoSupport {
                                     .topicoPai(topicoPai)
                                     .titulo(normalizarTitulo(subTitulo))
                                     .pesoEdital(peso)
+                                    .relevanciaBanca(relevancia)
+                                    .justificativaPeso(justificativa)
                                     .nivelProficiencia(NivelProficiencia.INICIANTE)
                                     .concluido(false)
                                     .ordem(k)
@@ -122,6 +131,33 @@ public class EditalConversaoSupport {
                 totalMaterias,
                 totalTopicos
         );
+    }
+
+    private RelevanciaBanca parseRelevancia(String val) {
+        if (val == null || val.isBlank()) {
+            return null;
+        }
+        try {
+            return RelevanciaBanca.valueOf(val.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private String normalizarJustificativa(String justificativa) {
+        if (justificativa == null || justificativa.isBlank()) {
+            return null;
+        }
+        String limpo = justificativa.trim();
+        return limpo.length() > 1000 ? limpo.substring(0, 1000).trim() : limpo;
+    }
+
+    private String normalizarBanca(String banca) {
+        if (banca == null || banca.isBlank()) {
+            return null;
+        }
+        String limpo = banca.trim();
+        return limpo.length() > 100 ? limpo.substring(0, 100).trim() : limpo;
     }
 
     private String normalizarTitulo(String titulo) {

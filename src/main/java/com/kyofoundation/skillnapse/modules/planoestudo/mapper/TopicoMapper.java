@@ -47,6 +47,8 @@ public class TopicoMapper {
                 topico.getTitulo(),
                 topico.getNivelProficiencia(),
                 topico.getPesoEdital(),
+                topico.getRelevanciaBanca(),
+                topico.getJustificativaPeso(),
                 topico.getConcluido(),
                 topico.getOrdem(),
                 topico.getCriadoEm(),

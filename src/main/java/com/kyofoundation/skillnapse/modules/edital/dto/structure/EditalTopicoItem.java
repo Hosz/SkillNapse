@@ -12,6 +12,18 @@ public record EditalTopicoItem(
 
         @Min(1) @Max(10)
         Integer pesoEdital,
+
+        String relevanciaBanca,
+
+        String justificativaPeso,
+
         List<String> subtopicos
 ) {
+    public EditalTopicoItem(
+            String titulo,
+            Integer pesoEdital,
+            List<String> subtopicos
+    ) {
+        this(titulo, pesoEdital, null, null, subtopicos);
+    }
 }

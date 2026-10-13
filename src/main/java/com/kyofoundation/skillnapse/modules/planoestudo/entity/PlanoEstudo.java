@@ -36,7 +36,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(of = {"id", "titulo", "ativo"})
+@ToString(of = {"id", "titulo", "banca", "ativo"})
 @EqualsAndHashCode(of = "id")
 public class PlanoEstudo {
 
@@ -54,6 +54,9 @@ public class PlanoEstudo {
 
     @Column(name = "descricao", columnDefinition = "TEXT")
     private String descricao;
+
+    @Column(name = "banca", length = 100)
+    private String banca;
 
     @Builder.Default
     @Column(name = "ativo", nullable = false)

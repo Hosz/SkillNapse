@@ -13,6 +13,7 @@ import com.kyofoundation.skillnapse.modules.edital.repository.RascunhoEditalRepo
 import com.kyofoundation.skillnapse.modules.planoestudo.entity.Materia;
 import com.kyofoundation.skillnapse.modules.planoestudo.entity.PlanoEstudo;
 import com.kyofoundation.skillnapse.modules.planoestudo.entity.Topico;
+import com.kyofoundation.skillnapse.modules.planoestudo.enums.RelevanciaBanca;
 import com.kyofoundation.skillnapse.modules.planoestudo.repository.MateriaRepository;
 import com.kyofoundation.skillnapse.modules.planoestudo.repository.PlanoEstudoRepository;
 import com.kyofoundation.skillnapse.modules.planoestudo.repository.TopicoRepository;
@@ -151,5 +152,64 @@ class EditalConversaoSupportTest {
         assertThat(response).isNotNull();
         assertThat(response.tituloPlano().length()).isLessThanOrEqualTo(255);
         verify(topicoRepository, times(2)).save(any(Topico.class));
+    }
+
+    @Test
+    @DisplayName("Deve converter rascunho preenchendo banca, relevancia e justificativa de peso")
+    void deveConverterRascunhoComRaioXBancaEJustificativaDePeso() {
+        EditalTopicoItem topicoItem = new EditalTopicoItem(
+                "Interpretação e Compreensão de Texto",
+                9,
+                "MUITO_ALTA",
+                "A banca FGV concentrou ~42% das questões em tipologia e interpretação nos últimos 4 anos.",
+                List.of("Coesão", "Coerência")
+        );
+        EditalMaterialItem materiaItem = new EditalMaterialItem("Língua Portuguesa", List.of(topicoItem));
+        EditalArvoreEstruturada arvore = new EditalArvoreEstruturada(
+                "Polícia Federal 2026",
+                "Cebraspe",
+                "Policial",
+                "Agente de Polícia Federal",
+                List.of(materiaItem)
+        );
+
+        String json = EditalTreeMapper.toJson(arvore);
+        RascunhoEdital rascunho = RascunhoEdital.builder()
+                .id(UUID.randomUUID())
+                .usuario(usuario)
+                .nomeArquivo("edital-pf.pdf")
+                .conteudoExtraidoJson(json)
+                .status(StatusRascunhoEdital.AGUARDANDO_APROVACAO)
+                .build();
+
+        when(planoEstudoRepository.save(any(PlanoEstudo.class))).thenAnswer(i -> {
+            PlanoEstudo p = i.getArgument(0);
+            assertThat(p.getBanca()).isEqualTo("Cebraspe");
+            p.setId(UUID.randomUUID());
+            return p;
+        });
+        when(materiaRepository.save(any(Materia.class))).thenAnswer(i -> {
+            Materia m = i.getArgument(0);
+            m.setId(UUID.randomUUID());
+            return m;
+        });
+        when(topicoRepository.save(any(Topico.class))).thenAnswer(i -> {
+            Topico t = i.getArgument(0);
+            assertThat(t.getPesoEdital()).isEqualTo(9);
+            assertThat(t.getRelevanciaBanca()).isEqualTo(RelevanciaBanca.MUITO_ALTA);
+            assertThat(t.getJustificativaPeso()).contains("FGV");
+            t.setId(UUID.randomUUID());
+            return t;
+        });
+        when(rascunhoEditalRepository.save(any(RascunhoEdital.class))).thenAnswer(i -> i.getArgument(0));
+
+        ConverterRascunhoEditalRequest request = new ConverterRascunhoEditalRequest("Plano PF", "Foco Policial");
+
+        ConversaoEditalResponse response = support.executarConversao(usuario, rascunho, request);
+
+        assertThat(response).isNotNull();
+        assertThat(response.tituloPlano()).isEqualTo("Plano PF");
+        verify(planoEstudoRepository).save(any(PlanoEstudo.class));
+        verify(topicoRepository, times(3)).save(any(Topico.class));
     }
 }
