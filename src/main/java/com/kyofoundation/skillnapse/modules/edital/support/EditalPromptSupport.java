@@ -13,28 +13,32 @@ public class EditalPromptSupport {
             DIRETRIZES CRÍTICAS DE ESTRUTURAÇÃO:
             
             1. NOMENCLATURA DAS MATÉRIAS:
-               - Identifique as disciplinas macro exigidas (ex: "Língua Portuguesa", "Raciocínio Lógico e Matemático", "Direito Constitucional", "Direito Administrativo", "Informática e Tecnologia da Informação", "Conhecimentos Específicos").
+               - Identifique as disciplinas macro exigidas com nomes canônicos e claros.
             
-            2. DECOMPOSIÇÃO OBRIGATÓRIA DOS TÓPICOS (NUNCA GENERALIZE):
-               - REGRA INEGOCIÁVEL: NUNCA crie um tópico único com o mesmo nome da matéria (por exemplo, sob a matéria "Língua Portuguesa", é PROIBIDO criar um tópico chamado "Língua Portuguesa").
+            2. ORDENAÇÃO LÓGICA E DIDÁTICA DOS TÓPICOS E SUBTÓPICOS:
+               - Os editais frequentemente listam temas em ordem arbitrária, burocrática ou fora de sequência didática.
+               - Organize os tópicos e subtópicos de cada matéria em uma ordem lógica e racional de aprendizado (progressão didática: conceitos fundamentais e pré-requisitos primeiro, seguidos por métodos, procedimentos e aplicações avançadas), não seguindo a ordem exata do edital caso esteja fora de ordem.
+            
+            3. DECOMPOSIÇÃO OBRIGATÓRIA DOS TÓPICOS (NUNCA GENERALIZE):
+               - REGRA INEGOCIÁVEL: NUNCA crie um tópico único com o mesmo nome da matéria.
                - Toda matéria DEVE ser decomposta em múltiplos tópicos temáticos específicos (geralmente entre 3 e 8 tópicos por matéria).
-               - Se o edital apresentar itens numerados ou tópicos separados por pontos/vírgulas (ex: "1. Morfologia e sintaxe", "2. Atos e poderes administrativos"), agrupe ou mapeie cada um desses temas como tópicos temáticos claros.
+               - Se o edital apresentar itens numerados ou tópicos separados por pontos/vírgulas, agrupe ou mapeie cada um desses temas como tópicos temáticos claros na ordem didática correta.
             
-            3. EXTRAÇÃO MINUCIOSA DE SUBTÓPICOS:
-               - Cada tópico DEVE conter uma lista de 'subtopicos' detalhando os conceitos, teorias, leis específicas, desdobramentos e itens pontuais a serem estudados.
+            4. EXTRAÇÃO MINUCIOSA DE SUBTÓPICOS:
+               - Cada tópico DEVE conter uma lista de 'subtopicos' detalhando os conceitos, teorias, regras específicas, desdobramentos e itens pontuais a serem estudados.
                - NUNCA deixe a lista de subtópicos vazia se o edital detalha os assuntos daquele tópico.
-               - Subtópicos devem ser frases/termos objetivos e claros (ex: "Compreensão e interpretação de textos", "Concordância verbal e nominal", "Princípios fundamentais da administração pública", "Regime jurídico dos servidores públicos").
+               - Subtópicos devem ser frases/termos objetivos e claros.
             
-            4. PESO NO EDITAL ('pesoEdital'):
+            5. PESO NO EDITAL ('pesoEdital'):
                - Atribua um número inteiro de 1 a 10 para cada tópico representando sua relevância para a aprovação:
-                 * 8 a 10: Tópicos de altíssima relevância, disciplinas eliminatórias ou com grande número de questões (ex: Redação, Língua Portuguesa, matérias específicas essenciais do cargo).
+                 * 8 a 10: Tópicos de altíssima relevância, disciplinas eliminatórias ou com grande número de questões.
                  * 5 a 7: Tópicos de média a alta incidência e relevância intermediária.
                  * 1 a 4: Tópicos introdutórios, teóricos básicos ou de menor peso relativo.
             
-            5. FILTRO E LIMPEZA:
+            6. FILTRO E LIMPEZA:
                - Ignore regras burocráticas irrelevantes (isenção de taxa, locais de inscrição, recursos, prazos de pagamento). Foque estritamente no Conteúdo Programático exigido nas provas.
 
-            6. FORMATO DE SAÍDA ESTRITO:
+            7. FORMATO DE SAÍDA ESTRITO:
                - Retorne OBRIGATORIAMENTE um objeto JSON RFC8259 puro e válido aderente ao schema solicitado.
                - NÃO inclua preâmbulos, títulos, cumprimentos, textos introdutórios ou comentários antes ou depois do JSON.
                - Inicie diretamente com '{' e termine com '}'.
@@ -58,6 +62,7 @@ public class EditalPromptSupport {
 
                 INSTRUÇÕES CRUCIAIS:
                 - Extraia o nome exato do concurso e o cargo.
+                - Organize os tópicos e subtópicos em ordem lógica e racional de aprendizado (não siga a ordem exata do edital caso esteja fora de ordem).
                 - Decomponha CADA matéria em seus respectivos tópicos temáticos e liste TODOS os subtópicos correspondentes.
                 - NUNCA resuma ou una disciplinas diferentes em uma só.
                 - Garanta profundidade, riqueza e granularidade pedagógica para todas as disciplinas identificadas.
@@ -79,12 +84,12 @@ public class EditalPromptSupport {
 
                 DIRETRIZES E REGRAS MANDATÓRIAS:
                 1. NOME OFICIAL DO CERTAME:
-                   - Extraia o nome oficial do concurso público ou exame e o órgão/entidade promotora (ex: "Tribunal Regional Federal", "Secretaria de Estado da Fazenda", "Polícia Civil", "Concurso Público Nacional Unificado").
+                   - Extraia o nome oficial do concurso público ou exame e o órgão ou entidade promotora.
                 2. VARREDURA EXAUSTIVA DE CARGOS E ESPECIALIDADES:
                    - Inspecione minuciosamente os quadros de vagas, tabelas de cargos/requisitos e seções de conteúdo programático do edital.
-                   - Editais frequentemente agrupam múltiplos órgãos vinculados, diferentes níveis de escolaridade (ex: Técnico e Analista), carreiras distintas (ex: Agente e Escrivão; Soldado e Oficial) ou dezenas de especialidades (ex: Direito, Engenharia, Tecnologia da Informação, Área Administrativa).
+                   - Editais frequentemente agrupam múltiplos órgãos vinculados, diferentes níveis de escolaridade, carreiras distintas ou dezenas de especialidades.
                    - NUNCA limite o resultado apenas ao primeiro cargo citado na portaria de abertura ou preâmbulo. Inclua TODOS os cargos e especialidades identificados no certame.
-                   - Mantenha o nome formal e canônico de cada cargo (ex: "Analista Judiciário - Área Judiciária", "Técnico Administrativo", "Auditor-Fiscal").
+                   - Mantenha o nome formal e canônico de cada cargo conforme informado no edital.
                 3. EDITAIS DE CARGO ÚNICO:
                    - Se o edital for destinado exclusivamente a um único cargo, retorne uma lista contendo apenas esse cargo canônico.
                 4. NÃO adicione matérias, tópicos ou outras seções nesta etapa.
