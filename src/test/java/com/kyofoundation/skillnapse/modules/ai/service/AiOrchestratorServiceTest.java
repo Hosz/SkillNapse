@@ -276,4 +276,16 @@ class AiOrchestratorServiceTest {
         assertThat(resultado.provider()).isEqualTo("groq");
         verify(aiFallbackClientSupport).executeFallback(request);
     }
+
+    @Test
+    @DisplayName("Deve identificar corretamente erros transitórios como 503, alta demanda temporária e 429")
+    void deveIdentificarErrosTransitoriosCorretamente() {
+        Throwable erro503 = new RuntimeException("503 Service Unavailable: This model is currently experiencing high demand. Spikes in demand are usually temporary.");
+        Throwable erro429 = new RuntimeException("429 RESOURCE_EXHAUSTED: Rate limit exceeded");
+        Throwable erroNormal = new IllegalArgumentException("Parâmetro inválido");
+
+        assertThat(AiOrchestratorService.isTransientError(erro503)).isTrue();
+        assertThat(AiOrchestratorService.isTransientError(erro429)).isTrue();
+        assertThat(AiOrchestratorService.isTransientError(erroNormal)).isFalse();
+    }
 }

@@ -49,7 +49,7 @@ public class AiFallbackClientSupport {
     @Value("${skillnapse.ai.fallback.api-key:}")
     private String fallbackApiKey;
 
-    @Value("${skillnapse.ai.fallback.model:openai/gpt-oss-120b}")
+    @Value("${skillnapse.ai.fallback.model:llama-3.3-70b-versatile}")
     private String fallbackModel;
 
     @Value("${skillnapse.ai.fallback.gemini-api-key:}")
@@ -125,6 +125,21 @@ public class AiFallbackClientSupport {
                 log.info("[IA Fallback] Resposta obtida com sucesso via [{}]!", step.name());
                 return response;
             } catch (Exception ex) {
+                if (AiOrchestratorService.isTransientError(ex)) {
+                    log.warn("Instabilidade temporária detectada no fallback [{}] ({}). Tentando retry com backoff de 1.5s...", step.name(), ex.getMessage());
+                    try {
+                        Thread.sleep(1500);
+                        AiGenerationResponse retryResponse = step.action().call();
+                        log.info("[IA Fallback] Resposta obtida com sucesso via [{}] após retry!", step.name());
+                        return retryResponse;
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    } catch (Exception retryEx) {
+                        log.warn("Retry no fallback [{}] também falhou: {}. Tentando próximo elo da cadeia...", step.name(), retryEx.getMessage());
+                        ultimoErro = retryEx;
+                        continue;
+                    }
+                }
                 log.warn("Fallback via [{}] falhou: {}. Tentando próximo elo da cadeia...", step.name(), ex.getMessage());
                 ultimoErro = ex;
             }

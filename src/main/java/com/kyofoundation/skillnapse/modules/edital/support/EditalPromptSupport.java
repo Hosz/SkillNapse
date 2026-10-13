@@ -4,6 +4,8 @@ import com.kyofoundation.skillnapse.modules.ai.dto.PromptRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class EditalPromptSupport {
@@ -56,6 +58,8 @@ public class EditalPromptSupport {
     }
 
     public PromptRequest criarPromptParaExtracao(String pdfExtraido, String cargoAlvo) {
+        String textoOtimizado = extrairTrechoParaConteudoProgramatico(pdfExtraido, cargoAlvo);
+
         String cargoInstrucao = (cargoAlvo != null && !cargoAlvo.isBlank())
                 ? String.format("ATENÇÃO: O foco específico do candidato é o cargo: \"%s\". Extraia EXCLUSIVAMENTE o conteúdo programático e disciplinas pertinentes a este cargo, desconsiderando matérias exclusivas de outros cargos presentes no edital.\n\n", cargoAlvo.trim())
                 : "";
@@ -74,7 +78,7 @@ public class EditalPromptSupport {
                 - NUNCA resuma ou una disciplinas diferentes em uma só.
                 - Garanta profundidade, riqueza e granularidade pedagógica para todas as disciplinas identificadas.
                 - Retorne EXCLUSIVAMENTE o JSON estruturado puro, sem nenhum texto antes ou depois.
-                """, cargoInstrucao, pdfExtraido);
+                """, cargoInstrucao, textoOtimizado);
 
         return new PromptRequest(
                 userPrompt,
@@ -86,6 +90,8 @@ public class EditalPromptSupport {
     }
 
     public PromptRequest criarPromptParaDeteccaoCargos(String pdfExtraido) {
+        String textoOtimizado = extrairTrechoParaDeteccaoCargos(pdfExtraido);
+
         String systemPrompt = """
                 Você é um especialista sênior em curadoria pedagógica e análise de editais de concursos públicos, vestibulares e exames de seleção brasileiros.
                 Sua missão é identificar com precisão o certame e extrair a lista exaustiva de TODOS os cargos, carreiras, funções ou especialidades oferecidos no edital.
@@ -116,7 +122,7 @@ public class EditalPromptSupport {
                 --- FIM DO TEXTO DO EDITAL ---
 
                 Retorne EXCLUSIVAMENTE o JSON estruturado puro, sem nenhum texto antes ou depois.
-                """, pdfExtraido);
+                """, textoOtimizado);
 
         return new PromptRequest(
                 userPrompt,
@@ -124,5 +130,84 @@ public class EditalPromptSupport {
                 0.1,
                 8192
         );
+    }
+
+    public static String extrairTrechoParaDeteccaoCargos(String textoCompleto) {
+        if (textoCompleto == null || textoCompleto.isBlank()) {
+            return "";
+        }
+
+        // Se o texto já tiver tamanho compacto (até ~25.000 caracteres), envia completo
+        if (textoCompleto.length() <= 25_000) {
+            return textoCompleto;
+        }
+
+        StringBuilder trecho = new StringBuilder();
+
+        // 1. Primeiros 20.000 caracteres (preâmbulo, identificação do órgão, comissão e primeiras tabelas)
+        trecho.append(textoCompleto, 0, 20_000);
+        trecho.append("\n\n[... TRECHO INTERMEDIÁRIO OMITIDO PARA ANÁLISE FOCADA DE CARGOS ...]\n\n");
+
+        // 2. Busca por seções específicas de quadros de vagas/cargos no restante do texto
+        String restante = textoCompleto.substring(20_000);
+        Pattern padraoQuadro = Pattern.compile(
+                "(?i)(quadro\\s+de\\s+vagas|dos\\s+cargos|tabela\\s+de\\s+cargos|cargos\\s+e\\s+vagas|distribui[cç][aã]o\\s+das\\s+vagas|anexo\\s+[i1]\\b)",
+                Pattern.UNICODE_CHARACTER_CLASS
+        );
+
+        Matcher matcher = padraoQuadro.matcher(restante);
+        int trechosExtras = 0;
+        int maxTrechosExtras = 3;
+
+        while (matcher.find() && trechosExtras < maxTrechosExtras) {
+            int matchStart = matcher.start();
+            int startJanela = Math.max(0, matchStart - 100);
+            int endJanela = Math.min(restante.length(), matchStart + 3500);
+
+            trecho.append("\n--- SEÇÃO DE VAGAS/CARGOS IDENTIFICADA NO EDITAL ---\n");
+            trecho.append(restante, startJanela, endJanela);
+            trecho.append("\n");
+            trechosExtras++;
+        }
+
+        return trecho.toString();
+    }
+
+    public static String extrairTrechoParaConteudoProgramatico(String textoCompleto, String cargoAlvo) {
+        if (textoCompleto == null || textoCompleto.isBlank()) {
+            return "";
+        }
+
+        // Se o texto for razoável (até ~80.000 caracteres, cerca de 35 páginas), envia completo
+        if (textoCompleto.length() <= 80_000) {
+            return textoCompleto;
+        }
+
+        StringBuilder trecho = new StringBuilder();
+
+        // 1. Primeiros 15.000 caracteres (identificação do concurso, banca, quadro geral de provas e pesos)
+        trecho.append(textoCompleto, 0, 15_000);
+        trecho.append("\n\n[... REGRAS BUROCRÁTICAS E PROCEDIMENTAIS OMITIDAS PARA PROCESSAMENTO DE CONTEÚDO ...]\n\n");
+
+        // 2. Localiza onde se inicia a seção de Conteúdo Programático
+        Pattern padraoConteudo = Pattern.compile(
+                "(?i)(conte[uú]do\\s+program[aá]tico|objetos\\s+de\\s+avalia[cç][aã]o|programa\\s+das\\s+provas|programa\\s+de\\s+conhecimentos|disciplinas\\s+e\\s+conte[uú]dos|anexo\\s+.*conte[uú]do)",
+                Pattern.UNICODE_CHARACTER_CLASS
+        );
+
+        Matcher matcher = padraoConteudo.matcher(textoCompleto);
+        if (matcher.find()) {
+            int indiceInicio = matcher.start();
+            int fimJanela = Math.min(textoCompleto.length(), indiceInicio + 75_000);
+            trecho.append("--- INÍCIO DO CONTEÚDO PROGRAMÁTICO IDENTIFICADO ---\n");
+            trecho.append(textoCompleto, indiceInicio, fimJanela);
+        } else {
+            // Fallback: se não encontrar os termos, inclui os anexos finais do documento
+            int inicioFinal = Math.max(15_000, textoCompleto.length() - 70_000);
+            trecho.append("--- ANEXOS FINAIS DO EDITAL ---\n");
+            trecho.append(textoCompleto, inicioFinal, textoCompleto.length());
+        }
+
+        return trecho.toString();
     }
 }

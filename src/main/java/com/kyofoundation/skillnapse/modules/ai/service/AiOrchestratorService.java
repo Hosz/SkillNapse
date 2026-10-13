@@ -188,8 +188,8 @@ public class AiOrchestratorService {
             log.warn("Provedor principal [{}] falhou em '{}' ({}). Verificando contingência...",
                     getActiveProviderName(), operationName, ex.getMessage());
 
-            if (isRateLimitError(ex)) {
-                log.warn("Taxa limite temporária (429) detectada em {}. Tentando retry com backoff de 2s...", operationName);
+            if (isTransientError(ex)) {
+                log.warn("Instabilidade temporária ou taxa limite detectada em {}: {}. Tentando retry com backoff de 2s...", operationName, ex.getMessage());
                 try {
                     Thread.sleep(2000);
                     return primaryAction.get();
@@ -225,7 +225,7 @@ public class AiOrchestratorService {
         }
     }
 
-    public static boolean isRateLimitError(Throwable t) {
+    public static boolean isTransientError(Throwable t) {
         if (t == null) return false;
         String msg = t.getMessage();
         if (msg != null) {
@@ -234,11 +234,25 @@ public class AiOrchestratorService {
                     || lower.contains("rate-limit")
                     || lower.contains("rate limit")
                     || lower.contains("too many requests")
-                    || lower.contains("resource_exhausted")) {
+                    || lower.contains("resource_exhausted")
+                    || lower.contains("503")
+                    || lower.contains("service unavailable")
+                    || lower.contains("high demand")
+                    || lower.contains("spikes in demand")
+                    || lower.contains("temporarily unavailable")
+                    || lower.contains("504")
+                    || lower.contains("gateway timeout")
+                    || lower.contains("502")
+                    || lower.contains("bad gateway")
+                    || lower.contains("failed to generate content")) {
                 return true;
             }
         }
-        return isRateLimitError(t.getCause());
+        return isTransientError(t.getCause());
+    }
+
+    public static boolean isRateLimitError(Throwable t) {
+        return isTransientError(t);
     }
 
     public static boolean isQuotaOrRateLimitException(Throwable t) {

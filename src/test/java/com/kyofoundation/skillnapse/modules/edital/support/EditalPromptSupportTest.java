@@ -38,4 +38,36 @@ class EditalPromptSupportTest {
         assertThat(request.temperature()).isEqualTo(0.1);
         assertThat(request.maxTokens()).isEqualTo(8192);
     }
+
+    @Test
+    @DisplayName("Deve extrair trecho compacto para detecção de cargos quando o edital for extenso")
+    void deveOtimizarTrechoParaDeteccaoCargosEmEditalExtenso() {
+        String textoLongo = "Preâmbulo do Edital Concurso TJPE " + "A".repeat(30_000)
+                + "\nQuadro de Vagas e Cargos:\n1. Analista Judiciário\n2. Oficial de Justiça\n"
+                + "B".repeat(10_000);
+
+        String resultado = EditalPromptSupport.extrairTrechoParaDeteccaoCargos(textoLongo);
+
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.length()).isLessThan(textoLongo.length());
+        assertThat(resultado).contains("Preâmbulo do Edital Concurso TJPE");
+        assertThat(resultado).contains("SEÇÃO DE VAGAS/CARGOS IDENTIFICADA NO EDITAL");
+        assertThat(resultado).contains("Analista Judiciário");
+    }
+
+    @Test
+    @DisplayName("Deve focar no trecho de conteúdo programático quando o edital for extenso")
+    void deveOtimizarTrechoParaConteudoProgramaticoEmEditalExtenso() {
+        String textoLongo = "Preâmbulo e regras do edital " + "X".repeat(90_000)
+                + "\nConteúdo Programático:\nLíngua Portuguesa: Ortografia, Sintaxe.\n"
+                + "Y".repeat(10_000);
+
+        String resultado = EditalPromptSupport.extrairTrechoParaConteudoProgramatico(textoLongo, "Soldado");
+
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.length()).isLessThan(textoLongo.length());
+        assertThat(resultado).contains("Preâmbulo e regras do edital");
+        assertThat(resultado).contains("INÍCIO DO CONTEÚDO PROGRAMÁTICO IDENTIFICADO");
+        assertThat(resultado).contains("Língua Portuguesa: Ortografia, Sintaxe.");
+    }
 }
