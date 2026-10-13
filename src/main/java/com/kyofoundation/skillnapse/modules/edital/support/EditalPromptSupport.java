@@ -15,19 +15,24 @@ public class EditalPromptSupport {
             1. NOMENCLATURA DAS MATÉRIAS:
                - Identifique as disciplinas macro exigidas com nomes canônicos e claros.
             
-            2. ORDENAÇÃO LÓGICA E DIDÁTICA DOS TÓPICOS E SUBTÓPICOS:
-               - Os editais frequentemente listam temas em ordem arbitrária, burocrática ou fora de sequência didática.
-               - Organize os tópicos e subtópicos de cada matéria em uma ordem lógica e racional de aprendizado (progressão didática: conceitos fundamentais e pré-requisitos primeiro, seguidos por métodos, procedimentos e aplicações avançadas), não seguindo a ordem exata do edital caso esteja fora de ordem.
+            2. SEQUENCIAMENTO PEDAGÓGICO OBRIGATÓRIO (TRILHA PROGRESSIVA DE ESTUDO):
+               - Agrupamento temático isolado NÃO é suficiente: não basta reunir assuntos afins sob um mesmo tópico se a ordem de estudo estiver incorreta.
+               - É MANDATÓRIO que a lista de tópicos de cada matéria represente uma sequência cronológica e didática real de aprendizado (passo a passo de estudo, do início ao nível avançado), ignorando totalmente a ordem física ou burocrática em que o edital foi redigido.
+               - Progressão de aprendizado obrigatória para a ordenação dos tópicos:
+                 * Início (Fundamentação / Pré-requisitos): Conceitos elementares, definições basilares, vocabulário essencial e princípios introdutórios indispensáveis para compreender os temas seguintes.
+                 * Meio (Desenvolvimento / Mecânica): Estruturas centrais, operações, procedimentos normais e regras gerais da matéria.
+                 * Fim (Aprofundamento / Aplicação): Exceções, casos especiais, aplicações práticas complexas e tópicos integradores.
+               - O mesmo sequenciamento pedagógico progressivo aplica-se OBRIGATORIAMENTE à lista de 'subtopicos' dentro de cada tópico: o primeiro subtópico inicia os fundamentos do tema e os subsequentes desdobram e aprofundam.
             
             3. DECOMPOSIÇÃO OBRIGATÓRIA DOS TÓPICOS (NUNCA GENERALIZE):
                - REGRA INEGOCIÁVEL: NUNCA crie um tópico único com o mesmo nome da matéria.
-               - Toda matéria DEVE ser decomposta em múltiplos tópicos temáticos específicos (geralmente entre 3 e 8 tópicos por matéria).
-               - Se o edital apresentar itens numerados ou tópicos separados por pontos/vírgulas, agrupe ou mapeie cada um desses temas como tópicos temáticos claros na ordem didática correta.
+               - Toda matéria DEVE ser decomposta em múltiplos tópicos específicos (geralmente entre 3 e 8 tópicos por matéria), dispostos na sequência pedagógica exata de estudo.
+               - Se o edital apresentar itens numerados ou tópicos separados por pontos/vírgulas, agrupe ou mapeie cada um desses temas como tópicos claros posicionados na ordem didática correta.
             
             4. EXTRAÇÃO MINUCIOSA DE SUBTÓPICOS:
                - Cada tópico DEVE conter uma lista de 'subtopicos' detalhando os conceitos, teorias, regras específicas, desdobramentos e itens pontuais a serem estudados.
                - NUNCA deixe a lista de subtópicos vazia se o edital detalha os assuntos daquele tópico.
-               - Subtópicos devem ser frases/termos objetivos e claros.
+               - Subtópicos devem ser frases/termos objetivos e claros, dispostos na ordem lógica e progressiva de aprendizado.
             
             5. PESO NO EDITAL ('pesoEdital'):
                - Atribua um número inteiro de 1 a 10 para cada tópico representando sua relevância para a aprovação:
@@ -62,8 +67,8 @@ public class EditalPromptSupport {
 
                 INSTRUÇÕES CRUCIAIS:
                 - Extraia o nome exato do concurso e o cargo.
-                - Organize os tópicos e subtópicos em ordem lógica e racional de aprendizado (não siga a ordem exata do edital caso esteja fora de ordem).
-                - Decomponha CADA matéria em seus respectivos tópicos temáticos e liste TODOS os subtópicos correspondentes.
+                - REORGANIZAÇÃO PEDAGÓGICA MANDATÓRIA DA SEQUÊNCIA DE ESTUDO: Não faça apenas agrupamento temático; ordene os tópicos e os subtópicos de cada disciplina em uma sequência cronológica progressiva de aprendizado (fundamentos e pré-requisitos primeiro, desenvolvimento intermediário ao centro, e aplicações avançadas/exceções ao final). Ignore a ordem física do texto original do edital caso não seja didática.
+                - Decomponha CADA matéria em múltiplos tópicos ordenados pedagogicamente e liste TODOS os subtópicos correspondentes na mesma progressão de aprendizado.
                 - NUNCA resuma ou una disciplinas diferentes em uma só.
                 - Garanta profundidade, riqueza e granularidade pedagógica para todas as disciplinas identificadas.
                 - Retorne EXCLUSIVAMENTE o JSON estruturado puro, sem nenhum texto antes ou depois.

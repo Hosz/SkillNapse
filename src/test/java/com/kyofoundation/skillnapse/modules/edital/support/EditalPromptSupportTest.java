@@ -18,10 +18,10 @@ class EditalPromptSupportTest {
 
         assertThat(request).isNotNull();
         assertThat(request.prompt()).contains("Português, Matemática.");
-        assertThat(request.prompt()).contains("Organize os tópicos e subtópicos em ordem lógica e racional de aprendizado");
+        assertThat(request.prompt()).contains("REORGANIZAÇÃO PEDAGÓGICA MANDATÓRIA DA SEQUÊNCIA DE ESTUDO");
         assertThat(request.prompt()).doesNotContain("$s");
         assertThat(request.systemMessage()).contains("Conteúdo Programático");
-        assertThat(request.systemMessage()).contains("ORDENAÇÃO LÓGICA E DIDÁTICA DOS TÓPICOS E SUBTÓPICOS");
+        assertThat(request.systemMessage()).contains("SEQUENCIAMENTO PEDAGÓGICO OBRIGATÓRIO (TRILHA PROGRESSIVA DE ESTUDO)");
         assertThat(request.temperature()).isEqualTo(0.2);
         assertThat(request.maxTokens()).isEqualTo(16384);
     }
