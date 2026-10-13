@@ -43,8 +43,25 @@ public class EditalPromptSupport {
             6. FILTRO E LIMPEZA:
                - Ignore regras burocráticas irrelevantes (isenção de taxa, locais de inscrição, recursos, prazos de pagamento). Foque estritamente no Conteúdo Programático exigido nas provas.
 
-            7. FORMATO DE SAÍDA ESTRITO:
-               - Retorne OBRIGATORIAMENTE um objeto JSON RFC8259 puro e válido aderente ao schema solicitado.
+            7. FORMATO DE SAÍDA ESTRITO (SCHEMA OBRIGATÓRIO):
+               - Retorne OBRIGATORIAMENTE um objeto JSON RFC8259 puro e válido aderente exatamente ao schema:
+                 {
+                   "nomeConcurso": "Nome Oficial do Concurso",
+                   "cargo": "Nome do Cargo",
+                   "materias": [
+                     {
+                       "nome": "Nome da Matéria",
+                       "topicos": [
+                         {
+                           "titulo": "Título do Tópico",
+                           "pesoEdital": 8,
+                           "subtopicos": ["Subtópico 1", "Subtópico 2"]
+                         }
+                       ]
+                     }
+                   ]
+                 }
+               - É ESTRITAMENTE PROIBIDO retornar o array 'materias' vazio! Toda matéria deve conter seus tópicos, e cada tópico seus subtópicos.
                - NÃO inclua preâmbulos, títulos, cumprimentos, textos introdutórios ou comentários antes ou depois do JSON.
                - Inicie diretamente com '{' e termine com '}'.
             """;
@@ -58,9 +75,10 @@ public class EditalPromptSupport {
                 ? String.format("""
                 ISOLAMENTO ESTRITO DE ESCOPO (BOUNDARY ENFORCEMENT):
                 - Perfil/Cargo Alvo Selecionado: "%s"
-                - Isole cirurgicamente a secção documental que corresponde de forma única e exclusiva a este cargo.
-                - Descarte terminantemente qualquer nó, tópico, anexo ou menção pertencente a outros perfis, cargos ou categorias presentes no mesmo documento, impedindo contaminação cruzada.
-                - Não adicione conteúdos externos, generalizações conceituais ou matérias não delimitadas para este cargo.
+                - Isole cirurgicamente a secção documental que corresponde a este cargo.
+                - Capture TANTO as disciplinas de Conhecimentos Gerais/Básicos/Comuns a todos os cargos QUANTO os Conhecimentos Específicos exigidos para este cargo.
+                - Descarte terminantemente tópicos ou matérias pertencentes com exclusividade a outros perfis ou cargos presentes no documento, impedindo contaminação cruzada.
+                - Não adicione conteúdos externos, generalizações conceituais ou matérias não delimitadas para este certame.
 
                 """, cargoAlvo.trim())
                 : "";
@@ -79,6 +97,7 @@ public class EditalPromptSupport {
                 - PRESERVAÇÃO DE FIDELIDADE (ZERO INTERPOLAÇÃO): Mantenha a integralidade e o sentido dos termos do texto original, alterando unicamente a taxonomia e a indexação sequencial de aprendizagem.
                 - NUNCA resuma ou una disciplinas diferentes em uma só.
                 - Garanta profundidade, riqueza e granularidade pedagógica para todas as disciplinas identificadas.
+                - O array 'materias' NUNCA deve ser retornado vazio. Extraia todas as matérias programáticas com seus respectivos tópicos e subtópicos.
                 - Retorne EXCLUSIVAMENTE o JSON estruturado puro, sem nenhum texto antes ou depois.
                 """, cargoInstrucao, pdfExtraido);
 
