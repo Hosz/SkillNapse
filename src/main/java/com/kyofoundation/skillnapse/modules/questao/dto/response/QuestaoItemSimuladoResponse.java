@@ -14,6 +14,26 @@ public record QuestaoItemSimuladoResponse(
         DificuldadeQuestao dificuldade,
         String banca,
         Integer ano,
-        List<AlternativaItemSimuladoResponse> alternativas
+        List<AlternativaItemSimuladoResponse> alternativas,
+        UUID alternativaCorretaId,
+        String letraCorreta,
+        UUID alternativaEscolhidaId,
+        String letraEscolhida,
+        Boolean acertou,
+        String explicacaoGabarito
 ) {
+    public QuestaoItemSimuladoResponse(
+            UUID id,
+            UUID topicoId,
+            String assuntoGeral,
+            String topicoReferencia,
+            String enunciado,
+            DificuldadeQuestao dificuldade,
+            String banca,
+            Integer ano,
+            List<AlternativaItemSimuladoResponse> alternativas
+    ) {
+        this(id, topicoId, assuntoGeral, topicoReferencia, enunciado, dificuldade, banca, ano, alternativas, null, null, null, null, null, null);
+    }
 }
+

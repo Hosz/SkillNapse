@@ -53,10 +53,10 @@ class SimuladoValidatorTest {
     @Test
     @DisplayName("Deve lançar BadRequestException para título muito longo")
     void deveLancarBadRequestParaTituloLongo() {
-        CriarSimuladoRequest request = new CriarSimuladoRequest("A".repeat(151), TipoSimulado.MANUAL);
+        CriarSimuladoRequest request = new CriarSimuladoRequest("A".repeat(301), TipoSimulado.MANUAL);
         assertThatThrownBy(() -> validator.validarCriacao(request))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessage("O título do simulado não pode ultrapassar 150 caracteres.");
+                .hasMessage("O título do simulado não pode ultrapassar 300 caracteres.");
     }
 
     @Test

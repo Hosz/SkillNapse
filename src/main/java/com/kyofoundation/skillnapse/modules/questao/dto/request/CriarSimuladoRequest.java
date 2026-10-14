@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 public record CriarSimuladoRequest(
         @NotBlank(message = "O título do simulado é obrigatório.")
-        @Size(max = 150, message = "O título deve ter no máximo 150 caracteres.")
+        @Size(max = 300, message = "O título deve ter no máximo 300 caracteres.")
         String titulo,
 
         TipoSimulado tipo

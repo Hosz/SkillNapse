@@ -51,7 +51,7 @@ public class Simulado {
     @JoinColumn(name = "usuario_id", nullable = false)
     private Usuario usuario;
 
-    @Column(name = "titulo", length = 150, nullable = false)
+    @Column(name = "titulo", length = 300, nullable = false)
     private String titulo;
 
     @Builder.Default

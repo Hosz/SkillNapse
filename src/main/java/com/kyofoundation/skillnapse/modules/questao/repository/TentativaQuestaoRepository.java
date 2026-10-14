@@ -1,6 +1,8 @@
 package com.kyofoundation.skillnapse.modules.questao.repository;
 
 import com.kyofoundation.skillnapse.modules.auth.entity.Usuario;
+import com.kyofoundation.skillnapse.modules.questao.entity.Questao;
+import com.kyofoundation.skillnapse.modules.questao.entity.Simulado;
 import com.kyofoundation.skillnapse.modules.questao.entity.TentativaQuestao;
 import com.kyofoundation.skillnapse.modules.questao.dto.projection.MetricasTopicoProjection;
 import org.springframework.data.domain.Page;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -46,6 +49,12 @@ public interface TentativaQuestaoRepository extends JpaRepository<TentativaQuest
     long countBySimuladoId(UUID simuladoId);
 
     long countBySimuladoIdAndAcertouTrue(UUID simuladoId);
+
+    Optional<TentativaQuestao> findFirstByUsuarioAndQuestaoAndSimulado(
+            Usuario usuario,
+            Questao questao,
+            Simulado simulado
+    );
 
     @Query("""
         SELECT t.topico.id AS topicoId,

@@ -208,9 +208,9 @@ public class SimuladoAdaptativoService {
     }
 
     private String truncarTitulo(String titulo) {
-        if (titulo.length() <= 150) {
+        if (titulo.length() <= 300) {
             return titulo;
         }
-        return titulo.substring(0, 147) + "...";
+        return titulo.substring(0, 297) + "...";
     }
 }

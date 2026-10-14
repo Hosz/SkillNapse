@@ -114,6 +114,58 @@ public class SimuladoAdaptativoMapper {
         );
     }
 
+    public static QuestaoItemSimuladoResponse toQuestaoItemSimuladoComGabarito(
+            Questao questao,
+            UUID topicoId,
+            com.kyofoundation.skillnapse.modules.questao.entity.TentativaQuestao tentativa
+    ) {
+        List<AlternativaItemSimuladoResponse> alternativas = new ArrayList<>();
+        UUID altCorretaId = null;
+        String letraCorreta = null;
+
+        if (questao.getAlternativas() != null) {
+            for (AlternativaQuestao alt : questao.getAlternativas()) {
+                boolean isCorreta = Boolean.TRUE.equals(alt.getCorreta());
+                if (isCorreta) {
+                    altCorretaId = alt.getId();
+                    letraCorreta = alt.getLetra();
+                }
+                alternativas.add(new AlternativaItemSimuladoResponse(
+                        alt.getId(),
+                        alt.getLetra(),
+                        alt.getTexto(),
+                        isCorreta
+                ));
+            }
+        }
+
+        UUID altEscolhidaId = (tentativa != null && tentativa.getAlternativaEscolhida() != null)
+                ? tentativa.getAlternativaEscolhida().getId()
+                : null;
+        String letraEscolhida = (tentativa != null && tentativa.getAlternativaEscolhida() != null)
+                ? tentativa.getAlternativaEscolhida().getLetra()
+                : null;
+        Boolean acertou = (tentativa != null) ? tentativa.getAcertou() : null;
+
+        return new QuestaoItemSimuladoResponse(
+                questao.getId(),
+                topicoId,
+                questao.getAssuntoGeral(),
+                questao.getTopicoReferencia(),
+                questao.getEnunciado(),
+                questao.getDificuldade(),
+                questao.getBanca(),
+                questao.getAno(),
+                alternativas,
+                altCorretaId,
+                letraCorreta,
+                altEscolhidaId,
+                letraEscolhida,
+                acertou,
+                questao.getExplicacaoGabarito()
+        );
+    }
+
     public static SimuladoAdaptativoResponse toSimuladoAdaptativoResponse(
             Simulado simulado,
             List<QuestaoItemSimuladoResponse> questoes

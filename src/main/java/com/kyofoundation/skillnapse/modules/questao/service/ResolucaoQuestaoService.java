@@ -27,8 +27,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -69,15 +71,31 @@ public class ResolucaoQuestaoService {
         AlternativaQuestao alternativaCorreta = alternativaQuestaoFinder.findCorretaPorQuestaoId(questao.getId());
         boolean acertou = Boolean.TRUE.equals(alternativaEscolhida.getCorreta());
 
-        TentativaQuestao tentativa = ResolucaoQuestaoMapper.toEntity(
-                usuario,
-                questao,
-                alternativaEscolhida,
-                acertou,
-                request.tempoGastoSegundos(),
-                simulado,
-                topico
-        );
+        Optional<TentativaQuestao> tentativaExistente = (simulado != null)
+                ? tentativaQuestaoRepository.findFirstByUsuarioAndQuestaoAndSimulado(usuario, questao, simulado)
+                : Optional.empty();
+
+        TentativaQuestao tentativa;
+        if (tentativaExistente.isPresent()) {
+            tentativa = tentativaExistente.get();
+            tentativa.setAlternativaEscolhida(alternativaEscolhida);
+            tentativa.setAcertou(acertou);
+            tentativa.setTempoGastoSegundos(request.tempoGastoSegundos());
+            tentativa.setRespondidoEm(Instant.now());
+            if (topico != null) {
+                tentativa.setTopico(topico);
+            }
+        } else {
+            tentativa = ResolucaoQuestaoMapper.toEntity(
+                    usuario,
+                    questao,
+                    alternativaEscolhida,
+                    acertou,
+                    request.tempoGastoSegundos(),
+                    simulado,
+                    topico
+            );
+        }
 
         TentativaQuestao salva = tentativaQuestaoRepository.save(tentativa);
 

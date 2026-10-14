@@ -21,7 +21,7 @@ public record GerarSimuladoAdaptativoRequest(
 
         List<UUID> topicoIds,
 
-        @Size(max = 150, message = "O título customizado do simulado não pode ultrapassar 150 caracteres.")
+        @Size(max = 300, message = "O título customizado do simulado não pode ultrapassar 300 caracteres.")
         String titulo
 ) {
     public GerarSimuladoAdaptativoRequest(UUID planoEstudoId, Integer quantidadeQuestoes, String bancaAlvo, List<UUID> topicoIds) {

@@ -71,12 +71,19 @@ public class SimuladoService {
         long acertos = tentativaQuestaoFinder.contarAcertosPorSimulado(simulado.getId());
 
         List<TentativaQuestao> tentativas = tentativaQuestaoFinder.buscarPorSimulado(simulado.getId());
+        boolean isConcluido = Boolean.TRUE.equals(simulado.getConcluido());
         List<QuestaoItemSimuladoResponse> questoes = (tentativas != null) ? tentativas.stream()
                 .filter(t -> t.getQuestao() != null)
-                .map(t -> SimuladoAdaptativoMapper.toQuestaoItemSimulado(
-                        t.getQuestao(),
-                        t.getTopico() != null ? t.getTopico().getId() : null
-                ))
+                .map(t -> isConcluido
+                        ? SimuladoAdaptativoMapper.toQuestaoItemSimuladoComGabarito(
+                                t.getQuestao(),
+                                t.getTopico() != null ? t.getTopico().getId() : null,
+                                t
+                        )
+                        : SimuladoAdaptativoMapper.toQuestaoItemSimulado(
+                                t.getQuestao(),
+                                t.getTopico() != null ? t.getTopico().getId() : null
+                        ))
                 .toList() : List.of();
 
         return SimuladoMapper.toResponseComQuestoes(simulado, total, acertos, questoes);
@@ -97,7 +104,31 @@ public class SimuladoService {
 
         proficienciaTopicoSupport.atualizarProficienciaTopicosDoSimulado(salvo.getId());
 
-        return SimuladoMapper.toResponse(salvo, total, acertos);
+        List<TentativaQuestao> tentativas = tentativaQuestaoFinder.buscarPorSimulado(salvo.getId());
+        List<QuestaoItemSimuladoResponse> questoes = (tentativas != null) ? tentativas.stream()
+                .filter(t -> t.getQuestao() != null)
+                .map(t -> SimuladoAdaptativoMapper.toQuestaoItemSimuladoComGabarito(
+                        t.getQuestao(),
+                        t.getTopico() != null ? t.getTopico().getId() : null,
+                        t
+                ))
+                .toList() : List.of();
+
+        return SimuladoMapper.toResponseComQuestoes(salvo, total, acertos, questoes);
+    }
+
+    @Transactional
+    public SimuladoResponse reiniciar(UUID id, UUID userId) {
+        Usuario usuario = userFinder.findById(userId);
+        usuarioValidator.validarUsuarioAtivo(usuario);
+
+        Simulado simulado = simuladoFinder.findById(id);
+        simuladoValidator.validarPropriedade(usuario, simulado);
+
+        simulado.setConcluido(false);
+        simuladoRepository.save(simulado);
+
+        return buscarPorId(id, userId);
     }
 
     @Transactional
