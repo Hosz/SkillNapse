@@ -1,5 +1,9 @@
 # 🧠 SkillNapse API
 
+<div align="center">
+  <a href="https://ko-fi.com/murilo_marques" target="_blank"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="ko-fi"></a>
+</div>
+
 > **Plataforma de Alta Performance para Gestão, Orquestração e Execução de Rotinas de Estudos com Inteligência Artificial**  
 > Criado por **Murilo Henrique (Hokyozu)**
 
