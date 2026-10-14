@@ -237,6 +237,36 @@ class SimuladoServiceTest {
     }
 
     @Test
+    @DisplayName("Deve reiniciar simulado com sucesso alterando concluido para false")
+    void deveReiniciarSimuladoComSucesso() {
+        UUID userId = UUID.randomUUID();
+        UUID simId = UUID.randomUUID();
+        Usuario usuario = Usuario.builder().id(userId).ativo(true).build();
+        Simulado sim = Simulado.builder()
+                .id(simId)
+                .usuario(usuario)
+                .titulo("Simulado TCU")
+                .tipo(TipoSimulado.MANUAL)
+                .concluido(true)
+                .criadoEm(Instant.now())
+                .build();
+
+        when(userFinder.findById(userId)).thenReturn(usuario);
+        doNothing().when(usuarioValidator).validarUsuarioAtivo(usuario);
+        when(simuladoFinder.findById(simId)).thenReturn(sim);
+        doNothing().when(simuladoValidator).validarPropriedade(usuario, sim);
+        when(simuladoRepository.save(sim)).thenReturn(sim);
+        when(tentativaQuestaoFinder.contarPorSimulado(simId)).thenReturn(5L);
+        when(tentativaQuestaoFinder.contarAcertosPorSimulado(simId)).thenReturn(3L);
+
+        SimuladoResponse response = simuladoService.reiniciar(simId, userId);
+
+        assertThat(response).isNotNull();
+        assertThat(sim.getConcluido()).isFalse();
+        verify(simuladoRepository).save(sim);
+    }
+
+    @Test
     @DisplayName("Deve excluir simulado com sucesso")
     void deveExcluirSimuladoComSucesso() {
         UUID userId = UUID.randomUUID();

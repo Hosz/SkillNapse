@@ -108,6 +108,24 @@ public class SimuladoController {
         return ResponseEntity.ok(simuladoService.concluir(id, userId));
     }
 
+    @PatchMapping("/{id}/reiniciar")
+    @Operation(summary = "Reiniciar simulado", description = "Reabre um simulado para que o usuário possa refazê-lo do início.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Simulado reiniciado com sucesso",
+                    content = @Content(schema = @Schema(implementation = SimuladoResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Simulado pertence a outro usuário",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Simulado não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<SimuladoResponse> reiniciar(
+            @PathVariable UUID id,
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ResponseEntity.ok(simuladoService.reiniciar(id, userId));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Excluir simulado", description = "Remove um simulado do histórico do usuário autenticado.")
     @ApiResponses({

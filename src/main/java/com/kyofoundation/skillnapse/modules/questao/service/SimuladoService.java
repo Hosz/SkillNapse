@@ -118,6 +118,20 @@ public class SimuladoService {
     }
 
     @Transactional
+    public SimuladoResponse reiniciar(UUID id, UUID userId) {
+        Usuario usuario = userFinder.findById(userId);
+        usuarioValidator.validarUsuarioAtivo(usuario);
+
+        Simulado simulado = simuladoFinder.findById(id);
+        simuladoValidator.validarPropriedade(usuario, simulado);
+
+        simulado.setConcluido(false);
+        simuladoRepository.save(simulado);
+
+        return buscarPorId(id, userId);
+    }
+
+    @Transactional
     public void excluir(UUID id, UUID userId) {
         Usuario usuario = userFinder.findById(userId);
         usuarioValidator.validarUsuarioAtivo(usuario);

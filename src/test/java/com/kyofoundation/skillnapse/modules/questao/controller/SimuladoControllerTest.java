@@ -160,6 +160,31 @@ class SimuladoControllerTest {
     }
 
     @Test
+    @DisplayName("Deve reiniciar simulado com status 200 OK")
+    void deveReiniciarSimuladoComSucesso() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID simId = UUID.randomUUID();
+        SimuladoResponse response = new SimuladoResponse(
+                simId,
+                "Simulado Reiniciado",
+                TipoSimulado.MANUAL,
+                false,
+                Instant.now(),
+                20L,
+                18L,
+                90.0
+        );
+
+        when(simuladoService.reiniciar(simId, userId)).thenReturn(response);
+
+        mockMvc.perform(patch("/api/v1/simulados/{id}/reiniciar", simId)
+                        .with(jwt().jwt(builder -> builder.subject(userId.toString()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(simId.toString()))
+                .andExpect(jsonPath("$.concluido").value(false));
+    }
+
+    @Test
     @DisplayName("Deve excluir simulado com status 204 No Content")
     void deveExcluirSimuladoComSucesso() throws Exception {
         UUID userId = UUID.randomUUID();
