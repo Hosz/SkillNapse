@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class SimuladoValidator {
 
-    private static final int MAX_TITULO_LENGTH = 150;
+    private static final int MAX_TITULO_LENGTH = 300;
 
     public void validarCriacao(CriarSimuladoRequest request) {
         if (request == null) {
