@@ -10,6 +10,7 @@
 [![Flyway](https://img.shields.io/badge/Flyway-Migrations-CC0200?style=for-the-badge&logo=flyway&logoColor=white)](https://flywaydb.org/)
 [![JWT](https://img.shields.io/badge/JWT-Stateless_Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 [![Swagger](https://img.shields.io/badge/OpenAPI-Swagger_UI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](http://localhost:8080/swagger-ui.html)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Apoie_o_Projeto-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/murilo_marques)
 
 ---
 
@@ -295,3 +296,5 @@ O projeto adota convenções e padrões estritos para garantir manutenibilidade,
 Desenvolvido com excelência por **Murilo Henrique Marques Bento Santos (Hokyozu)**.
 
 Distribuído sob a licença open-source **MIT**. Consulte o arquivo de licença para mais informações.
+
+☕ **Apoie o projeto:** Se o SkillNapse foi útil para você, considere apoiar o desenvolvimento no [Ko-fi](https://ko-fi.com/murilo_marques).
