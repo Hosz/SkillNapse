@@ -86,4 +86,18 @@ class ProgressoMetaDiariaSupportTest {
 
         assertThat(progresso.todasMetasAtingidas()).isFalse();
     }
+
+    @Test
+    @DisplayName("[calcularProgresso] Deve considerar meta de questões opcional se configurada como 0")
+    void deveConsiderarMetaQuestoesOpcionalQuandoZero() {
+        meta.setMetaQuestoesResolvidas(0);
+        LocalDate hoje = LocalDate.of(2026, 10, 8);
+
+        ProgressoMetaDiariaResponse progresso = support.calcularProgresso(meta, 7200L, 0L, hoje);
+
+        assertThat(progresso.metaMinutosAtingida()).isTrue();
+        assertThat(progresso.metaQuestoesAtingida()).isTrue();
+        assertThat(progresso.todasMetasAtingidas()).isTrue();
+        assertThat(support.isMetaDiariaCumprida(progresso)).isTrue();
+    }
 }

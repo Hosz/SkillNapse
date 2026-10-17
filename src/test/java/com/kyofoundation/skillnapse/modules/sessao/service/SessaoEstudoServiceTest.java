@@ -173,6 +173,23 @@ class SessaoEstudoServiceTest {
     }
 
     @Test
+    @DisplayName("Deve obter resumo de horas de hoje com sucesso")
+    void deveObterResumoHojeComSucesso() {
+        TotalizadorSessaoProjection projection = mock(TotalizadorSessaoProjection.class);
+        ResumoHorasLiquidasResponse resumoEsperado = new ResumoHorasLiquidasResponse(1800L, 0.5, 1L, 0L, 1L);
+
+        when(userFinder.findById(usuario.getId())).thenReturn(usuario);
+        when(resumoHorasLiquidasSupport.resolverZoneId("America/Sao_Paulo")).thenReturn(java.time.ZoneId.of("America/Sao_Paulo"));
+        when(sessaoEstudoRepository.obterDadosAgregados(eq(usuario.getId()), isNull(), any(Instant.class), any(Instant.class)))
+                .thenReturn(projection);
+        when(resumoHorasLiquidasSupport.calcularResumo(projection)).thenReturn(resumoEsperado);
+
+        ResumoHorasLiquidasResponse resultado = service.obterResumoHoje(usuario.getId(), "America/Sao_Paulo");
+
+        assertThat(resultado).isEqualTo(resumoEsperado);
+    }
+
+    @Test
     @DisplayName("Deve apagar sessao de estudo com sucesso")
     void deveApagarSessaoComSucesso() {
         UUID sessaoId = UUID.randomUUID();

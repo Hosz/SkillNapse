@@ -145,6 +145,30 @@ class SessaoEstudoControllerTest {
     }
 
     @Test
+    @DisplayName("Deve obter resumo de horas de hoje com status 200 OK")
+    void deveObterResumoHojeComSucesso() throws Exception {
+        UUID userId = UUID.randomUUID();
+        ResumoHorasLiquidasResponse response = new ResumoHorasLiquidasResponse(
+                3600L,
+                1.0,
+                1L,
+                0L,
+                1L
+        );
+
+        when(sessaoEstudoService.obterResumoHoje(eq(userId), eq("America/Sao_Paulo")))
+                .thenReturn(response);
+
+        mockMvc.perform(get("/api/v1/sessoes-estudo/resumo/hoje")
+                        .param("timezone", "America/Sao_Paulo")
+                        .with(jwt().jwt(builder -> builder.subject(userId.toString()))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalSegundosLiquidos").value(3600))
+                .andExpect(jsonPath("$.totalHorasLiquidas").value(1.0))
+                .andExpect(jsonPath("$.totalSessoes").value(1));
+    }
+
+    @Test
     @DisplayName("Deve apagar sessao de estudo com status 204 No Content")
     void deveApagarSessaoComSucesso() throws Exception {
         UUID userId = UUID.randomUUID();

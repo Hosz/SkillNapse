@@ -25,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
@@ -55,7 +57,7 @@ public class SessaoEstudoService {
         SessaoEstudo salva = sessaoEstudoRepository.save(sessaoEstudo);
 
         if (salva.getStatus() == StatusSessaoEstudo.CONCLUIDA && salva.getIniciadoEm() != null) {
-            LocalDate dataEstudo = salva.getIniciadoEm().atZone(ZoneOffset.UTC).toLocalDate();
+            LocalDate dataEstudo = salva.getIniciadoEm().atZone(ZoneId.systemDefault()).toLocalDate();
             ofensivaService.registrarEstudoSilencioso(usuario, dataEstudo);
         }
 
@@ -100,6 +102,20 @@ public class SessaoEstudoService {
         sessaoEstudoValidator.validarFiltroPeriodo(de, ate);
 
         TotalizadorSessaoProjection dadosBrutos = sessaoEstudoRepository.obterDadosAgregados(userId, topicoId, de, ate);
+        return resumoHorasLiquidasSupport.calcularResumo(dadosBrutos);
+    }
+
+    @Transactional(readOnly = true)
+    public ResumoHorasLiquidasResponse obterResumoHoje(UUID userId, String timezone) {
+        Usuario usuario = userFinder.findById(userId);
+        usuarioValidator.validarUsuarioAtivo(usuario);
+
+        ZoneId zone = resumoHorasLiquidasSupport.resolverZoneId(timezone);
+        LocalDate hoje = LocalDate.now(zone);
+        Instant de = hoje.atStartOfDay(zone).toInstant();
+        Instant ate = hoje.atTime(LocalTime.MAX).atZone(zone).toInstant();
+
+        TotalizadorSessaoProjection dadosBrutos = sessaoEstudoRepository.obterDadosAgregados(userId, null, de, ate);
         return resumoHorasLiquidasSupport.calcularResumo(dadosBrutos);
     }
 

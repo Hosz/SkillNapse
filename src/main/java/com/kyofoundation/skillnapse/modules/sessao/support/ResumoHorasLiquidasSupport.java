@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.ZoneId;
 
 @Component
 @RequiredArgsConstructor
@@ -32,5 +33,16 @@ public class ResumoHorasLiquidasSupport {
                 interrompidas,
                 totalSessoes
         );
+    }
+
+    public ZoneId resolverZoneId(String timezone) {
+        if (timezone == null || timezone.isBlank()) {
+            return ZoneId.systemDefault();
+        }
+        try {
+            return ZoneId.of(timezone.trim());
+        } catch (Exception e) {
+            return ZoneId.systemDefault();
+        }
     }
 }
