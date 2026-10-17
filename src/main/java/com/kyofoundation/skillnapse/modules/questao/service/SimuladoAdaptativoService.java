@@ -92,32 +92,39 @@ public class SimuladoAdaptativoService {
                 qtdParaEsteTopico = restante;
             }
 
-            String promptTexto = promptQuestaoAdaptativaSupport.construirPromptGeracao(
-                    topico, qtdParaEsteTopico, request.bancaAlvo()
-            );
+            int topicoRestante = qtdParaEsteTopico;
+            while (topicoRestante > 0 && restante > 0) {
+                int qtdBatch = Math.min(10, Math.min(topicoRestante, restante));
+                String promptTexto = promptQuestaoAdaptativaSupport.construirPromptGeracao(
+                        topico, qtdBatch, request.bancaAlvo()
+                );
 
-            PromptRequest promptRequest = new PromptRequest(
-                    promptTexto,
-                    "Você é um examinador sênior especialista na elaboração de questões de concursos públicos com saída estritamente em JSON válido.",
-                    0.2,
-                    8192
-            );
-            LoteQuestoesIaPayload lote = aiOrchestratorService.generateStructured(promptRequest, LoteQuestoesIaPayload.class);
+                PromptRequest promptRequest = new PromptRequest(
+                        promptTexto,
+                        "Você é um examinador sênior especialista na elaboração de questões de concursos públicos com saída estritamente em JSON válido.",
+                        0.2,
+                        8192
+                );
+                LoteQuestoesIaPayload lote = aiOrchestratorService.generateStructured(promptRequest, LoteQuestoesIaPayload.class);
 
-            if (lote != null && lote.questoes() != null) {
-                simuladoAdaptativoValidator.validarQuestoesGeradasIa(lote.questoes());
+                if (lote != null && lote.questoes() != null && !lote.questoes().isEmpty()) {
+                    simuladoAdaptativoValidator.validarQuestoesGeradasIa(lote.questoes());
 
-                for (QuestaoGeradaIaPayload questaoPayload : lote.questoes()) {
-                    if (restante <= 0) {
-                        break;
+                    for (QuestaoGeradaIaPayload questaoPayload : lote.questoes()) {
+                        if (restante <= 0 || topicoRestante <= 0) {
+                            break;
+                        }
+                        String hash = hashEnunciadoSupport.gerarHash(questaoPayload.enunciado());
+                        Questao questao = SimuladoAdaptativoMapper.toQuestaoEntity(
+                                questaoPayload, topico, hash, request.bancaAlvo()
+                        );
+                        Questao salva = questaoRepository.save(questao);
+                        questoesResponse.add(SimuladoAdaptativoMapper.toQuestaoItemSimulado(salva, topico.getId()));
+                        restante--;
+                        topicoRestante--;
                     }
-                    String hash = hashEnunciadoSupport.gerarHash(questaoPayload.enunciado());
-                    Questao questao = SimuladoAdaptativoMapper.toQuestaoEntity(
-                            questaoPayload, topico, hash, request.bancaAlvo()
-                    );
-                    Questao salva = questaoRepository.save(questao);
-                    questoesResponse.add(SimuladoAdaptativoMapper.toQuestaoItemSimulado(salva, topico.getId()));
-                    restante--;
+                } else {
+                    break;
                 }
             }
         }

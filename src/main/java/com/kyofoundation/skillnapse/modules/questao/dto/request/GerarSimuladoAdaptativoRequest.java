@@ -13,7 +13,7 @@ public record GerarSimuladoAdaptativoRequest(
         UUID planoEstudoId,
 
         @Min(value = 3, message = "O simulado adaptativo deve conter no mínimo 3 questões.")
-        @Max(value = 60, message = "O simulado adaptativo pode conter no máximo 60 questões por geração.")
+        @Max(value = 90, message = "O simulado adaptativo pode conter no máximo 90 questões por geração.")
         Integer quantidadeQuestoes,
 
         @Size(max = 50, message = "O nome da banca avaliadora não pode ultrapassar 50 caracteres.")

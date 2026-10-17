@@ -17,8 +17,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import com.kyofoundation.skillnapse.modules.planoestudo.entity.Topico;
+import com.kyofoundation.skillnapse.modules.planoestudo.finder.TopicoFinder;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -31,6 +34,7 @@ public class QuestaoService {
     private final QuestaoFinder questaoFinder;
     private final QuestaoValidator questaoValidator;
     private final HashEnunciadoSupport hashEnunciadoSupport;
+    private final TopicoFinder topicoFinder;
 
     @Transactional
     public QuestaoDetalheResponse criar(UUID userId, CriarQuestaoRequest request) {
@@ -77,5 +81,17 @@ public class QuestaoService {
 
         Questao questao = questaoFinder.findByIdComAlternativas(id);
         return QuestaoMapper.toDetalheResponse(questao);
+    }
+
+    @Transactional(readOnly = true)
+    public List<QuestaoDetalheResponse> listarPorTopico(UUID userId, UUID topicoId) {
+        Usuario usuario = userFinder.findById(userId);
+        usuarioValidator.validarUsuarioAtivo(usuario);
+
+        Topico topico = topicoFinder.findById(topicoId);
+        String topicoTitulo = topico.getTitulo() != null ? topico.getTitulo().trim() : "";
+
+        List<Questao> questoes = questaoRepository.buscarQuestoesPorTopico(topicoId, topicoTitulo);
+        return questoes.stream().map(QuestaoMapper::toDetalheResponse).toList();
     }
 }

@@ -38,7 +38,20 @@ public class TopicoMapper {
 
         List<TopicoResponse> subtopicos = (topico.getSubtopicos() == null || topico.getSubtopicos().isEmpty())
                 ? List.of()
-                : topico.getSubtopicos().stream().map(TopicoMapper::toResponse).toList();
+                : topico.getSubtopicos().stream()
+                        .sorted((a, b) -> {
+                            int comp = Integer.compare(
+                                    a.getOrdem() != null ? a.getOrdem() : 0,
+                                    b.getOrdem() != null ? b.getOrdem() : 0
+                            );
+                            if (comp != 0) return comp;
+                            if (a.getCriadoEm() != null && b.getCriadoEm() != null) {
+                                return a.getCriadoEm().compareTo(b.getCriadoEm());
+                            }
+                            return 0;
+                        })
+                        .map(TopicoMapper::toResponse)
+                        .toList();
 
         return new TopicoResponse(
                 topico.getId(),

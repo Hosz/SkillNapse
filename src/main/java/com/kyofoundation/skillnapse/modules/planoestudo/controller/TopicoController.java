@@ -4,6 +4,7 @@ import com.kyofoundation.skillnapse.common.exception.ErrorResponse;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.AtualizarProgressoRequest;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.CriarTopicoRequest;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.EditarTopicoRequest;
+import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.ReordenarItensRequest;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.response.TopicoResponse;
 import com.kyofoundation.skillnapse.modules.planoestudo.service.TopicoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -151,5 +152,25 @@ public class TopicoController {
             @PathVariable UUID materiaId) {
         UUID userId = UUID.fromString(jwt.getSubject());
         return ResponseEntity.ok(topicoService.listarArvoreTopicosPorMateria(userId, materiaId));
+    }
+
+    @PatchMapping("/materia/{materiaId}/reordenar")
+    @Operation(summary = "Reordenar tópicos da matéria", description = "Atualiza a ordenação sequencial de tópicos ou subtópicos de uma disciplina.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Ordem dos tópicos atualizada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Lista de identificadores vazia ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Acesso proibido: matéria ou tópico não pertence ao usuário",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Matéria ou tópico não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<Void> reordenarTopicos(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID materiaId,
+            @Valid @RequestBody ReordenarItensRequest request) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        topicoService.reordenarTopicos(userId, materiaId, request);
+        return ResponseEntity.noContent().build();
     }
 }

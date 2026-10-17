@@ -40,19 +40,19 @@ class SimuladoAdaptativoValidatorTest {
     }
 
     @Test
-    @DisplayName("validarRequisicao deve lançar BadRequestException quando quantidade for menor que 3 ou maior que 15")
+    @DisplayName("validarRequisicao deve lançar BadRequestException quando quantidade for menor que 3 ou maior que 90")
     void deveLancarQuandoQuantidadeForaDosLimites() {
         UUID planoId = UUID.randomUUID();
         GerarSimuladoAdaptativoRequest reqMenor = new GerarSimuladoAdaptativoRequest(planoId, 2, "FCC", null);
-        GerarSimuladoAdaptativoRequest reqMaior = new GerarSimuladoAdaptativoRequest(planoId, 16, "FCC", null);
+        GerarSimuladoAdaptativoRequest reqMaior = new GerarSimuladoAdaptativoRequest(planoId, 91, "FCC", null);
 
         assertThatThrownBy(() -> validator.validarRequisicao(reqMenor))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("entre 3 e 15");
+                .hasMessageContaining("entre 3 e 90");
 
         assertThatThrownBy(() -> validator.validarRequisicao(reqMaior))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("entre 3 e 15");
+                .hasMessageContaining("entre 3 e 90");
     }
 
     @Test
