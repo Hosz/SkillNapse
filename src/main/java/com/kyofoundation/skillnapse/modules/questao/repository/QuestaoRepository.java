@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -40,4 +41,16 @@ public interface QuestaoRepository extends JpaRepository<Questao, UUID> {
             @Param("termoBusca") String termoBusca,
             Pageable pageable
     );
+
+    @Query("""
+        SELECT DISTINCT q FROM Questao q
+        LEFT JOIN FETCH q.alternativas
+        WHERE (:topicoTitulo <> '' AND (LOWER(q.topicoReferencia) LIKE LOWER(CONCAT('%', :topicoTitulo, '%'))
+           OR LOWER(q.assuntoGeral) LIKE LOWER(CONCAT('%', :topicoTitulo, '%'))))
+           OR q.id IN (
+               SELECT t.questao.id FROM TentativaQuestao t WHERE t.topico.id = :topicoId
+           )
+        ORDER BY q.criadoEm DESC
+    """)
+    List<Questao> buscarQuestoesPorTopico(@Param("topicoId") UUID topicoId, @Param("topicoTitulo") String topicoTitulo);
 }

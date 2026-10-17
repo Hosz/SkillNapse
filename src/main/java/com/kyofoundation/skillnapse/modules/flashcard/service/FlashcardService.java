@@ -111,6 +111,25 @@ public class FlashcardService {
     }
 
     @Transactional(readOnly = true)
+    public Page<FlashcardResponse> listarFlashcards(UUID userId, UUID baralhoId, UUID topicoId, Pageable pageable) {
+        Usuario usuario = userFinder.findById(userId);
+        usuarioValidator.validarUsuarioAtivo(usuario);
+
+        if (baralhoId != null) {
+            Baralho baralho = baralhoFinder.findById(baralhoId);
+            baralhoValidator.validarPropriedadeBaralho(usuario, baralho);
+        }
+
+        if (topicoId != null) {
+            Topico topico = topicoFinder.findById(topicoId);
+            flashcardValidator.validarTopicoPertenceUsuario(usuario, topico);
+        }
+
+        Page<Flashcard> cards = flashcardFinder.buscarCardsUsuario(userId, baralhoId, topicoId, pageable);
+        return cards.map(FlashcardMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
     public Page<FlashcardResponse> listarCardsVencidos(UUID userId, UUID baralhoId, UUID topicoId, Pageable pageable) {
         Usuario usuario = userFinder.findById(userId);
         usuarioValidator.validarUsuarioAtivo(usuario);

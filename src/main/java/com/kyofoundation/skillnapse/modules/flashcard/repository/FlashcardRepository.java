@@ -26,6 +26,21 @@ public interface FlashcardRepository extends JpaRepository<Flashcard, UUID> {
         SELECT f FROM Flashcard f
         JOIN f.baralho b
         WHERE b.usuario.id = :usuarioId
+          AND (:baralhoId IS NULL OR b.id = :baralhoId)
+          AND (:topicoId IS NULL OR f.topico.id = :topicoId OR f.topico.topicoPai.id = :topicoId)
+        ORDER BY f.proximaRevisao ASC, f.id ASC
+    """)
+    Page<Flashcard> buscarCardsUsuario(
+            @Param("usuarioId") UUID usuarioId,
+            @Param("baralhoId") UUID baralhoId,
+            @Param("topicoId") UUID topicoId,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT f FROM Flashcard f
+        JOIN f.baralho b
+        WHERE b.usuario.id = :usuarioId
           AND f.proximaRevisao <= :dataReferencia
           AND (:baralhoId IS NULL OR b.id = :baralhoId)
           AND (:topicoId IS NULL OR f.topico.id = :topicoId)

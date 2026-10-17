@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -68,6 +69,7 @@ public class PlanoEstudo {
     private Instant atualizadoEm;
 
     @Builder.Default
+    @OrderBy("ordem ASC, criadoEm ASC")
     @OneToMany(mappedBy = "planoEstudo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Materia> materias = new ArrayList<>();
 }

@@ -6,6 +6,7 @@ import com.kyofoundation.skillnapse.modules.auth.validator.UsuarioValidator;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.AtualizarProgressoRequest;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.CriarTopicoRequest;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.EditarTopicoRequest;
+import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.ReordenarItensRequest;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.response.TopicoResponse;
 import com.kyofoundation.skillnapse.modules.planoestudo.entity.Materia;
 import com.kyofoundation.skillnapse.modules.planoestudo.entity.Topico;
@@ -119,5 +120,26 @@ public class TopicoService {
 
         List<Topico> topicosRaiz = topicoRepository.findByMateriaAndTopicoPaiIsNullOrderByOrdemAsc(materia);
         return topicosRaiz.stream().map(TopicoMapper::toResponse).toList();
+    }
+
+    @Transactional
+    public void reordenarTopicos(UUID userId, UUID materiaId, ReordenarItensRequest request) {
+        Usuario usuario = userFinder.findById(userId);
+        Materia materia = materiaFinder.findById(materiaId);
+
+        usuarioValidator.validarUsuarioAtivo(usuario);
+        materiaValidator.validarMateriaPertenceUsuario(usuario, materia);
+
+        if (request == null || request.idsOrdenados() == null || request.idsOrdenados().isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < request.idsOrdenados().size(); i++) {
+            UUID topicoId = request.idsOrdenados().get(i);
+            Topico topico = topicoFinder.findById(topicoId);
+            topicoValidator.validarTopicoPertenceUsuario(usuario, topico);
+            topico.setOrdem(i);
+            topicoRepository.save(topico);
+        }
     }
 }

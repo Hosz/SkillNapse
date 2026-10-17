@@ -124,6 +124,22 @@ public class SessaoEstudoController {
         return ResponseEntity.ok(sessaoEstudoService.obterResumoHoras(userId, topicoId, de, ate));
     }
 
+    @GetMapping("/resumo/hoje")
+    @Operation(summary = "Obter resumo de horas líquidas de hoje", description = "Calcula o total de horas líquidas de sessões do dia atual (resetado diariamente a cada meia-noite).")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Resumo do dia retornado com sucesso",
+                    content = @Content(schema = @Schema(implementation = ResumoHorasLiquidasResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Não autorizado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<ResumoHorasLiquidasResponse> obterResumoHoje(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @Parameter(description = "Identificador de fuso horário IANA (ex: America/Sao_Paulo). Se omitido, usa o fuso padrão do sistema.")
+            @RequestParam(required = false) String timezone) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ResponseEntity.ok(sessaoEstudoService.obterResumoHoje(userId, timezone));
+    }
+
     @DeleteMapping("/{sessaoId}")
     @Operation(summary = "Apagar sessão de estudo", description = "Exclui um registro de sessão de estudo.")
     @ApiResponses({

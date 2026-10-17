@@ -16,7 +16,7 @@ public class ProgressoMetaDiariaSupport {
             LocalDate data) {
 
         int metaMinutos = (meta != null && meta.getMetaMinutosEstudo() != null) ? meta.getMetaMinutosEstudo() : 120;
-        int metaQuestoes = (meta != null && meta.getMetaQuestoesResolvidas() != null) ? meta.getMetaQuestoesResolvidas() : 15;
+        int metaQuestoes = (meta != null && meta.getMetaQuestoesResolvidas() != null) ? meta.getMetaQuestoesResolvidas() : 0;
 
         long minutosEstudados = segundosEstudadosHoje / 60;
 
@@ -28,7 +28,7 @@ public class ProgressoMetaDiariaSupport {
         double percQuestoes = metaQuestoes > 0
                 ? Math.min(100.0, Math.round(((double) questoesRespondidasHoje / metaQuestoes * 100.0) * 10.0) / 10.0)
                 : 100.0;
-        boolean metaQuestoesAtingida = questoesRespondidasHoje >= metaQuestoes;
+        boolean metaQuestoesAtingida = metaQuestoes <= 0 || questoesRespondidasHoje >= metaQuestoes;
 
         boolean todasAtingidas = metaMinutosAtingida && metaQuestoesAtingida;
 
@@ -44,5 +44,12 @@ public class ProgressoMetaDiariaSupport {
                 metaQuestoesAtingida,
                 todasAtingidas
         );
+    }
+
+    public boolean isMetaDiariaCumprida(ProgressoMetaDiariaResponse progresso) {
+        if (progresso == null) {
+            return false;
+        }
+        return progresso.todasMetasAtingidas();
     }
 }

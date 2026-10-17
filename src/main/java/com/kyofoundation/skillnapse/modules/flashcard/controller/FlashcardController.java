@@ -64,6 +64,24 @@ public class FlashcardController {
         return ResponseEntity.status(HttpStatus.CREATED).body(flashcardService.criarFlashcard(userId, request));
     }
 
+    @GetMapping
+    @Operation(summary = "Listar flashcards do usuário", description = "Lista os cartões do usuário autenticado com filtros opcionais por baralho ou tópico.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de cartões recuperada com sucesso"),
+            @ApiResponse(responseCode = "403", description = "Baralho ou tópico informado pertence a outro usuário",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Baralho ou tópico não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<Page<FlashcardResponse>> listarFlashcards(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @Parameter(description = "ID do baralho (opcional)") @RequestParam(required = false) UUID baralhoId,
+            @Parameter(description = "ID do tópico (opcional)") @RequestParam(required = false) UUID topicoId,
+            @ParameterObject Pageable pageable) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ResponseEntity.ok(flashcardService.listarFlashcards(userId, baralhoId, topicoId, pageable));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Obter flashcard por ID", description = "Recupera as informações detalhadas e estado do algoritmo SM-2 de um flashcard.")
     @ApiResponses({

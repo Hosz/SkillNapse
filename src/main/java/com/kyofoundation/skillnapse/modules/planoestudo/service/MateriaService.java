@@ -5,6 +5,7 @@ import com.kyofoundation.skillnapse.modules.auth.finder.UserFinder;
 import com.kyofoundation.skillnapse.modules.auth.validator.UsuarioValidator;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.CriarMateriaRequest;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.EditarMateriaRequest;
+import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.ReordenarItensRequest;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.response.MateriaResponse;
 import com.kyofoundation.skillnapse.modules.planoestudo.entity.Materia;
 import com.kyofoundation.skillnapse.modules.planoestudo.entity.PlanoEstudo;
@@ -98,5 +99,26 @@ public class MateriaService {
 
         Page<Materia> materias = materiaRepository.findByPlanoEstudo(planoEstudo, pageable);
         return materias.map(MateriaMapper::toResponse);
+    }
+
+    @Transactional
+    public void reordenarMaterias(UUID userId, UUID planoId, ReordenarItensRequest request) {
+        Usuario usuario = userFinder.findById(userId);
+        PlanoEstudo planoEstudo = planoEstudoFinder.findById(planoId);
+
+        usuarioValidator.validarUsuarioAtivo(usuario);
+        planoEstudoValidator.validarPlanoPertenceUsuario(usuario, planoEstudo);
+
+        if (request == null || request.idsOrdenados() == null || request.idsOrdenados().isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < request.idsOrdenados().size(); i++) {
+            UUID materiaId = request.idsOrdenados().get(i);
+            Materia materia = materiaFinder.findById(materiaId);
+            materiaValidator.validarMateriaPertenceUsuario(usuario, materia);
+            materia.setOrdem(i);
+            materiaRepository.save(materia);
+        }
     }
 }

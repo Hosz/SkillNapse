@@ -3,6 +3,7 @@ package com.kyofoundation.skillnapse.modules.planoestudo.controller;
 import com.kyofoundation.skillnapse.common.exception.ErrorResponse;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.CriarMateriaRequest;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.EditarMateriaRequest;
+import com.kyofoundation.skillnapse.modules.planoestudo.dto.request.ReordenarItensRequest;
 import com.kyofoundation.skillnapse.modules.planoestudo.dto.response.MateriaResponse;
 import com.kyofoundation.skillnapse.modules.planoestudo.service.MateriaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -130,5 +131,25 @@ public class MateriaController {
             Pageable pageable) {
         UUID userId = UUID.fromString(jwt.getSubject());
         return ResponseEntity.ok(materiaService.listarMaterias(userId, planoId, pageable));
+    }
+
+    @PatchMapping("/plano/{planoId}/reordenar")
+    @Operation(summary = "Reordenar matérias", description = "Atualiza a ordenação sequencial das matérias vinculadas ao plano de estudos.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Ordem das matérias atualizada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Lista de identificadores vazia ou inválida",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Acesso proibido: plano ou matéria não pertence ao usuário",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Plano de estudo ou matéria não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<Void> reordenarMaterias(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID planoId,
+            @Valid @RequestBody ReordenarItensRequest request) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        materiaService.reordenarMaterias(userId, planoId, request);
+        return ResponseEntity.noContent().build();
     }
 }

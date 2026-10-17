@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Service
@@ -72,8 +72,9 @@ public class MetaDiariaService {
         MetaDiaria meta = metaDiariaFinder.buscarOuCriar(usuario);
 
         LocalDate data = dataReferencia != null ? dataReferencia : LocalDate.now();
-        Instant de = data.atStartOfDay(ZoneOffset.UTC).toInstant();
-        Instant ate = data.atTime(LocalTime.MAX).atZone(ZoneOffset.UTC).toInstant();
+        ZoneId zone = ZoneId.systemDefault();
+        Instant de = data.atStartOfDay(zone).toInstant();
+        Instant ate = data.atTime(LocalTime.MAX).atZone(zone).toInstant();
 
         TotalizadorSessaoProjection resumo = sessaoEstudoRepository.obterDadosAgregados(usuarioId, null, de, ate);
         long segundosEstudados = (resumo != null && resumo.getTotalSegundos() != null) ? resumo.getTotalSegundos() : 0L;

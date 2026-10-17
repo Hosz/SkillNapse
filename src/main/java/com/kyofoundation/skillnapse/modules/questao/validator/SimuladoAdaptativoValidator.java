@@ -15,7 +15,7 @@ import java.util.List;
 public class SimuladoAdaptativoValidator {
 
     private static final int QTD_MINIMA = 3;
-    private static final int QTD_MAXIMA = 15;
+    private static final int QTD_MAXIMA = 90;
 
     public void validarRequisicao(GerarSimuladoAdaptativoRequest request) {
         if (request == null) {

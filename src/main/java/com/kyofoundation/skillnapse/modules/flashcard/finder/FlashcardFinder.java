@@ -34,6 +34,10 @@ public class FlashcardFinder {
         return flashcardRepository.buscarCardsVencidos(usuarioId, dataReferencia, baralhoId, topicoId, pageable);
     }
 
+    public Page<Flashcard> buscarCardsUsuario(UUID usuarioId, UUID baralhoId, UUID topicoId, Pageable pageable) {
+        return flashcardRepository.buscarCardsUsuario(usuarioId, baralhoId, topicoId, pageable);
+    }
+
     public long contarCardsVencidos(UUID usuarioId, LocalDate dataReferencia) {
         return flashcardRepository.contarCardsVencidos(usuarioId, dataReferencia);
     }

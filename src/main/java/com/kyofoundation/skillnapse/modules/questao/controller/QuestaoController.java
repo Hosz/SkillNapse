@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -95,6 +96,23 @@ public class QuestaoController {
                 termoBusca,
                 pageable
         ));
+    }
+
+    @GetMapping("/topico/{topicoId}")
+    @Operation(summary = "Listar questões por tópico", description = "Retorna lista de questões detalhadas com todas as alternativas associadas ao tópico informado.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de questões detalhadas retornada com sucesso"),
+            @ApiResponse(responseCode = "403", description = "Usuário inativo ou não autorizado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Tópico não encontrado",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<List<QuestaoDetalheResponse>> listarPorTopico(
+            @PathVariable UUID topicoId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+        return ResponseEntity.ok(questaoService.listarPorTopico(userId, topicoId));
     }
 
     @GetMapping("/{id}")
